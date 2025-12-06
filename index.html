@@ -122,7 +122,7 @@
 
 <br><br>
 
-<h2>Saved Bills - SREE LAXMI OFFSET PRINTERS</h2>
+<h2>📌 Saved Bills - SREE LAXMI OFFSET PRINTERS</h2>
 
 <table>
 <thead>
@@ -137,7 +137,6 @@
 
 <script>
 let count = 0;
-const shopNumber = "9912879943";
 
 const price = {
   0:0, 100:350, 200:450, 300:550, 400:650,
@@ -149,39 +148,43 @@ const posterPrice = {
 };
 
 function updateTotals() {
-  const namunaCopies = document.getElementById('namunaCopies').value || "0";
+  const namunaCopies   = document.getElementById('namunaCopies').value || "0";
   const namuna45Copies = document.getElementById('namuna45Copies').value || "0";
   const handslipCopies = document.getElementById('handslipCopies').value || "0";
-  const posterCopies = document.getElementById('posterCopies').value || "0";
-  const stickerQty = parseInt(document.getElementById('stickerCopies').value || 0);
-  const kanduvalQty = parseInt(document.getElementById('kanduvalCopies').value || 0);
-  const jendaQty = parseInt(document.getElementById('jendaCopies').value || 0);
-  const badgeQty = parseInt(document.getElementById('badgeCopies').value || 0);
+  const posterCopies   = document.getElementById('posterCopies').value || "0";
+  const stickerQty     = parseInt(document.getElementById('stickerCopies').value || 0);
+  const kanduvalQty    = parseInt(document.getElementById('kanduvalCopies').value || 0);
+  const jendaQty       = parseInt(document.getElementById('jendaCopies').value || 0);
+  const badgeQty       = parseInt(document.getElementById('badgeCopies').value || 0);
 
-  const n  = price[namunaCopies]   || 0;
-  const n45= price[namuna45Copies] || 0;
-  const h  = price[handslipCopies] || 0;
-  const p  = posterPrice[posterCopies] || 0;
-  const s  = stickerQty * 50;
-  const k  = kanduvalQty * 15;
-  const j  = jendaQty * 20;
-  const b  = badgeQty * 5;
+  const n   = price[namunaCopies]        || 0;
+  const n45 = price[namuna45Copies]      || 0;
+  const h   = price[handslipCopies]      || 0;
+  const p   = posterPrice[posterCopies]  || 0;
+  const s   = stickerQty * 50;
+  const k   = kanduvalQty * 15;
+  const j   = jendaQty * 20;
+  const b   = badgeQty * 5;
 
-  document.getElementById('namunaAmount').value   = n || "";
+  document.getElementById('namunaAmount').value   = n   || "";
   document.getElementById('namuna45Amount').value = n45 || "";
-  document.getElementById('handslipAmount').value = h || "";
-  document.getElementById('posterAmount').value   = p || "";
-  document.getElementById('stickerAmount').value  = s || "";
-  document.getElementById('kanduvalAmount').value = k || "";
-  document.getElementById('jendaAmount').value    = j || "";
-  document.getElementById('badgeAmount').value    = b || "";
+  document.getElementById('handslipAmount').value = h   || "";
+  document.getElementById('posterAmount').value   = p   || "";
+  document.getElementById('stickerAmount').value  = s   || "";
+  document.getElementById('kanduvalAmount').value = k   || "";
+  document.getElementById('jendaAmount').value    = j   || "";
+  document.getElementById('badgeAmount').value    = b   || "";
 
-  const total = n + n45 + h + p + s + k + j + b;
-  document.getElementById('grandTotal').textContent = total;
+  document.getElementById('grandTotal').textContent = n + n45 + h + p + s + k + j + b;
 }
 
-document.querySelectorAll("input,select")
-  .forEach(el => el.addEventListener("input", updateTotals));
+// 🟢 Use 'input' for text/number, 'change' for dropdowns
+document.querySelectorAll("input").forEach(el => {
+  el.addEventListener("input", updateTotals);
+});
+document.querySelectorAll("select").forEach(el => {
+  el.addEventListener("change", updateTotals);
+});
 
 function clearForm() {
   document.querySelectorAll("input,select").forEach(el => {
@@ -199,41 +202,52 @@ function saveEntry() {
   updateTotals();
   const total = document.getElementById('grandTotal').textContent;
   const name  = document.getElementById('customerName').value || "-";
-  if (parseInt(total) === 0) return alert("No amount to save.");
+
+  if (parseInt(total) === 0) {
+    alert("No amount to save.");
+    return;
+  }
 
   count++;
-  document.getElementById('savedTable').insertAdjacentHTML("beforeend", `
-  <tr>
-    <td>${count}</td>
-    <td>${name}</td>
-    <td>₹${total}</td>
-    <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
-  </tr>`);
+  document.getElementById('savedTable').insertAdjacentHTML('beforeend', `
+    <tr>
+      <td>${count}</td>
+      <td>${name}</td>
+      <td>₹${total}</td>
+      <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
+    </tr>
+  `);
   clearForm();
 }
 
 function sendWhatsApp() {
   updateTotals();
+
   const name = document.getElementById('customerName').value || "-";
-  let num = document.getElementById('customerWhatsapp').value.replace(/\D/g, "");
-  if (!num) return alert("Please enter customer WhatsApp number.");
+  let num    = document.getElementById('customerWhatsapp').value.replace(/\D/g, "");
+
+  if (!num) {
+    alert("Please enter customer WhatsApp number.");
+    return;
+  }
+
   if (num.length === 10) num = "91" + num;
 
-const msg =
+  const msg =
 `💠 SREE LAXMI OFFSET PRINTERS 💠
 
 👤 Customer: ${name}
 
-Namuna Ballot: ₹${namunaAmount.value || 0}
-Namuna Ballot 4 & 5: ₹${namuna45Amount.value || 0}
-Handslips: ₹${handslipAmount.value || 0}
-Posters: ₹${posterAmount.value || 0}
-Stickers: ₹${stickerAmount.value || 0}
-Kanduvulu: ₹${kanduvalAmount.value || 0}
-Jenda: ₹${jendaAmount.value || 0}
-Badges: ₹${badgeAmount.value || 0}
+Namuna Ballot: ${document.getElementById('namunaCopies').value} copies – ₹${document.getElementById('namunaAmount').value || 0}
+Namuna Ballot 4 & 5: ${document.getElementById('namuna45Copies').value} copies – ₹${document.getElementById('namuna45Amount').value || 0}
+Handslips: ${document.getElementById('handslipCopies').value} copies – ₹${document.getElementById('handslipAmount').value || 0}
+Posters: ${document.getElementById('posterCopies').value} copies – ₹${document.getElementById('posterAmount').value || 0}
+Stickers: ${document.getElementById('stickerCopies').value} pcs – ₹${document.getElementById('stickerAmount').value || 0}
+Kanduvulu: ${document.getElementById('kanduvalCopies').value} pcs – ₹${document.getElementById('kanduvalAmount').value || 0}
+Jenda: ${document.getElementById('jendaCopies').value} pcs – ₹${document.getElementById('jendaAmount').value || 0}
+Badges: ${document.getElementById('badgeCopies').value} pcs – ₹${document.getElementById('badgeAmount').value || 0}
 
-💰 Total: ₹${grandTotal.textContent}
+💰 Total: ₹${document.getElementById('grandTotal').textContent}
 
 
 
@@ -243,10 +257,13 @@ Badges: ₹${badgeAmount.value || 0}
 📜 జరగబోయే ఈ ఎన్నికల్లో మీరు విజయం సాధించాలని  
 🙏 శ్రీ లక్ష్మీ ప్రింటింగ్ ప్రెస్ మనస్ఫూర్తిగా కోరుకుంటుంది
 
+CONTACT : 8341065537
+
 
 🙇‍♂ Thank You 🙏`;
 
-  window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, "_blank");
+  const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+  window.open(url, "_blank");
 }
 </script>
 
