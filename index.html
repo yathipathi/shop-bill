@@ -32,6 +32,16 @@
 <h2>Order Billing & Calculation System</h2>
 <br>
 
+<label><b>Date:</b></label>
+<input type="text" id="billDate" readonly>
+
+<br><br>
+
+<label><b>Serial No:</b></label>
+<input type="text" id="serialNo" readonly>
+
+<br><br>
+
 <label><b>Customer Name:</b></label>
 <input type="text" id="customerName">
 
@@ -127,7 +137,7 @@
 <table>
 <thead>
 <tr>
-  <th>S.No</th><th>Name</th><th>Amount</th><th>Action</th>
+  <th>Serial No</th><th>Date</th><th>Name</th><th>Amount</th><th>Action</th>
 </tr>
 </thead>
 <tbody id="savedTable"></tbody>
@@ -136,16 +146,33 @@
 </div>
 
 <script>
-let count = 0;
+// ====== BASIC SETUP ======
+
+document.getElementById("billDate").value = new Date().toLocaleDateString("en-GB");
+
+// Serial number counter (01, 02, 03, ...)
+let billCount = 1;
+
+// LocalStorage key
+const STORAGE_KEY = "slx_saved_bills";
+
+function updateSerialField() {
+  document.getElementById("serialNo").value = String(billCount).padStart(2, "0");
+}
+
+// ====== PRICE TABLES ======
 
 const price = {
   0:0, 100:350, 200:450, 300:550, 400:650,
   500:750, 600:850, 700:950, 800:1050, 900:1150, 1000:1250
 };
+
 const posterPrice = {
   0:0, 100:450, 200:700, 300:800, 400:1000,
   500:1200, 600:1400, 700:1600, 800:1800, 900:2000, 1000:2200
 };
+
+// ====== CALCULATION ======
 
 function updateTotals() {
   const namunaCopies   = document.getElementById('namunaCopies').value || "0";
@@ -166,19 +193,19 @@ function updateTotals() {
   const j   = jendaQty * 20;
   const b   = badgeQty * 5;
 
-  document.getElementById('namunaAmount').value   = n   || "";
-  document.getElementById('namuna45Amount').value = n45 || "";
-  document.getElementById('handslipAmount').value = h   || "";
-  document.getElementById('posterAmount').value   = p   || "";
-  document.getElementById('stickerAmount').value  = s   || "";
-  document.getElementById('kanduvalAmount').value = k   || "";
-  document.getElementById('jendaAmount').value    = j   || "";
-  document.getElementById('badgeAmount').value    = b   || "";
+  document.getElementById('namunaAmount').value   = n;
+  document.getElementById('namuna45Amount').value = n45;
+  document.getElementById('handslipAmount').value = h;
+  document.getElementById('posterAmount').value   = p;
+  document.getElementById('stickerAmount').value  = s;
+  document.getElementById('kanduvalAmount').value = k;
+  document.getElementById('jendaAmount').value    = j;
+  document.getElementById('badgeAmount').value    = b;
 
   document.getElementById('grandTotal').textContent = n + n45 + h + p + s + k + j + b;
 }
 
-// 🟢 Use 'input' for text/number, 'change' for dropdowns
+// Auto update totals
 document.querySelectorAll("input").forEach(el => {
   el.addEventListener("input", updateTotals);
 });
@@ -186,37 +213,107 @@ document.querySelectorAll("select").forEach(el => {
   el.addEventListener("change", updateTotals);
 });
 
+// ====== LOCALSTORAGE HELPERS ======
+
+function getStoredBills() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveStoredBills(bills) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(bills));
+}
+
+// Add row to table from bill object
+function appendBillRow(bill) {
+  const tbody = document.getElementById('savedTable');
+  const row = document.createElement('tr');
+  row.dataset.serial = bill.serial; // for delete
+
+  row.innerHTML = `
+    <td>${String(bill.serial).padStart(2,"0")}</td>
+    <td>${bill.date}</td>
+    <td>${bill.name}</td>
+    <td>₹${bill.amount}</td>
+    <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
+  `;
+  tbody.appendChild(row);
+}
+
+// Load bills from localStorage on page open
+function loadSavedBills() {
+  const bills = getStoredBills();
+  bills.forEach(bill => appendBillRow(bill));
+
+  // Set next serial number
+  if (bills.length > 0) {
+    const lastSerial = bills[bills.length - 1].serial || bills.length;
+    billCount = lastSerial + 1;
+  }
+  updateSerialField();
+}
+
+// ====== OTHER ACTIONS ======
+
 function clearForm() {
   document.querySelectorAll("input,select").forEach(el => {
-    if (el.tagName.toLowerCase() === 'select') el.value = "0";
-    else el.value = "";
+    if (el.tagName.toLowerCase() === 'select') {
+      el.value = "0";
+    } else if (el.id !== "billDate" && el.id !== "serialNo") {
+      el.value = "";
+    }
   });
-  document.getElementById('grandTotal').textContent = "0";
+  document.getElementById("grandTotal").textContent = "0";
 }
 
 function deleteRow(btn) {
-  btn.parentElement.parentElement.remove();
+  const row = btn.closest("tr");
+  const serial = parseInt(row.dataset.serial, 10);
+  row.remove();
+
+  // Remove from localStorage also
+  let bills = getStoredBills();
+  bills = bills.filter(b => b.serial !== serial);
+  saveStoredBills(bills);
 }
 
 function saveEntry() {
   updateTotals();
-  const total = document.getElementById('grandTotal').textContent;
+  const total = parseInt(document.getElementById('grandTotal').textContent || "0", 10);
   const name  = document.getElementById('customerName').value || "-";
+  const billDate = document.getElementById('billDate').value;
+  const serial = billCount;
 
-  if (parseInt(total) === 0) {
+  if (!total || total === 0) {
     alert("No amount to save.");
     return;
   }
 
-  count++;
-  document.getElementById('savedTable').insertAdjacentHTML('beforeend', `
-    <tr>
-      <td>${count}</td>
-      <td>${name}</td>
-      <td>₹${total}</td>
-      <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
-    </tr>
-  `);
+  const bill = {
+    serial: serial,
+    date: billDate,
+    name: name,
+    amount: total
+  };
+
+  // Add to table
+  appendBillRow(bill);
+
+  // Save to localStorage
+  const bills = getStoredBills();
+  bills.push(bill);
+  saveStoredBills(bills);
+
+  // Prepare next serial
+  billCount++;
+  updateSerialField();
+
   clearForm();
 }
 
@@ -225,6 +322,8 @@ function sendWhatsApp() {
 
   const name = document.getElementById('customerName').value || "-";
   let num    = document.getElementById('customerWhatsapp').value.replace(/\D/g, "");
+  const billDate = document.getElementById('billDate').value;
+  const serial = document.getElementById('serialNo').value;
 
   if (!num) {
     alert("Please enter customer WhatsApp number.");
@@ -234,37 +333,43 @@ function sendWhatsApp() {
   if (num.length === 10) num = "91" + num;
 
   const msg =
-`💠 SREE LAXMI OFFSET PRINTERS 💠
+`📅 Date: ${billDate}
+🧾 Bill No: ${serial}
+
+💠 SREE LAXMI OFFSET PRINTERS 💠
 
 👤 Customer: ${name}
 
-Namuna Ballot: ${document.getElementById('namunaCopies').value} copies – ₹${document.getElementById('namunaAmount').value || 0}
-Namuna Ballot 4 & 5: ${document.getElementById('namuna45Copies').value} copies – ₹${document.getElementById('namuna45Amount').value || 0}
-Handslips: ${document.getElementById('handslipCopies').value} copies – ₹${document.getElementById('handslipAmount').value || 0}
-Posters: ${document.getElementById('posterCopies').value} copies – ₹${document.getElementById('posterAmount').value || 0}
-Stickers: ${document.getElementById('stickerCopies').value} pcs – ₹${document.getElementById('stickerAmount').value || 0}
-Kanduvulu: ${document.getElementById('kanduvalCopies').value} pcs – ₹${document.getElementById('kanduvalAmount').value || 0}
-Jenda: ${document.getElementById('jendaCopies').value} pcs – ₹${document.getElementById('jendaAmount').value || 0}
-Badges: ${document.getElementById('badgeCopies').value} pcs – ₹${document.getElementById('badgeAmount').value || 0}
+Namuna Ballot: ${document.getElementById('namunaCopies').value} – ₹${document.getElementById('namunaAmount').value || 0}
+Namuna Ballot 4 & 5: ${document.getElementById('namuna45Copies').value} – ₹${document.getElementById('namuna45Amount').value || 0}
+Handslips: ${document.getElementById('handslipCopies').value} – ₹${document.getElementById('handslipAmount').value || 0}
+Posters: ${document.getElementById('posterCopies').value} – ₹${document.getElementById('posterAmount').value || 0}
+Stickers: ${document.getElementById('stickerCopies').value} – ₹${document.getElementById('stickerAmount').value || 0}
+Kanduvulu: ${document.getElementById('kanduvalCopies').value} – ₹${document.getElementById('kanduvalAmount').value || 0}
+Jenda: ${document.getElementById('jendaCopies').value} – ₹${document.getElementById('jendaAmount').value || 0}
+Badges: ${document.getElementById('badgeCopies').value} – ₹${document.getElementById('badgeAmount').value || 0}
 
 💰 Total: ₹${document.getElementById('grandTotal').textContent}
 
-
+━━━━━━━━━━━━━━━━━━
 
 🌟 As the elections approach, may victory walk beside you.  
 🤝 Best wishes - Sree Lakshmi Printing Press HUZURABAD 🇮🇳
 
-📜 జరగబోయే ఈ ఎన్నికల్లో మీరు విజయం సాధించాలని  
+📜 జరగబోయే ఈ ఎన్నికల్లో మీరు విజయం సాధించాలని
 🙏 శ్రీ లక్ష్మీ ప్రింటింగ్ ప్రెస్ మనస్ఫూర్తిగా కోరుకుంటుంది
 
-CONTACT : 8341065537
-
+━━━━━━━━━━━━━━━━━━
 
 🙇‍♂ Thank You 🙏`;
 
-  const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+  const url = https://wa.me/${num}?text=${encodeURIComponent(msg)};
   window.open(url, "_blank");
 }
+
+// Load saved bills on start and set first serial
+loadSavedBills();
+
 </script>
 
 </body>
