@@ -138,6 +138,10 @@
 <script>
 let count = 0;
 
+// 🔒 PERMANENT LIST STORAGE VARIABLES
+let savedBills = [];   // {id, name, total}
+let nextId = 1;
+
 const price = {
   0:0, 100:350, 200:450, 300:550, 400:650,
   500:750, 600:850, 700:950, 800:1050, 900:1150, 1000:1250
@@ -194,29 +198,91 @@ function clearForm() {
   document.getElementById('grandTotal').textContent = "0";
 }
 
-function deleteRow(btn) {
-  btn.parentElement.parentElement.remove();
+// 🔒 PERMANENT LIST: LOAD FROM localStorage ON PAGE LOAD
+function loadSavedBills() {
+  try {
+    const stored = localStorage.getItem('slp_savedBills');
+    const storedNextId = localStorage.getItem('slp_nextId');
+
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed)) {
+        savedBills = parsed;
+      }
+    }
+
+    if (storedNextId) {
+      nextId = parseInt(storedNextId) || 1;
+    } else {
+      // if no nextId stored, calculate from existing bills
+      const maxId = savedBills.reduce((max, b) => Math.max(max, b.id || 0), 0);
+      nextId = maxId + 1;
+    }
+
+    renderSavedBills();
+  } catch (e) {
+    console.error("Error loading saved bills:", e);
+    savedBills = [];
+    nextId = 1;
+  }
 }
 
+function saveBillsToStorage() {
+  try {
+    localStorage.setItem('slp_savedBills', JSON.stringify(savedBills));
+    localStorage.setItem('slp_nextId', String(nextId));
+  } catch (e) {
+    console.error("Error saving bills:", e);
+  }
+}
+
+function renderSavedBills() {
+  const tbody = document.getElementById('savedTable');
+  tbody.innerHTML = "";
+  savedBills.forEach((bill, index) => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-id', bill.id);
+    tr.innerHTML = `
+      <td>${index + 1}</td>
+      <td>${bill.name}</td>
+      <td>₹${bill.total}</td>
+      <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  count = savedBills.length;
+}
+
+// 🔴 DELETE ROW + UPDATE PERMANENT STORAGE
+function deleteRow(btn) {
+  const tr = btn.closest('tr');
+  const id = parseInt(tr.getAttribute('data-id'));
+
+  savedBills = savedBills.filter(bill => bill.id !== id);
+  saveBillsToStorage();
+  renderSavedBills();
+}
+
+// 🟢 SAVE ENTRY + ADD TO PERMANENT LIST
 function saveEntry() {
   updateTotals();
-  const total = document.getElementById('grandTotal').textContent;
+  const total = parseInt(document.getElementById('grandTotal').textContent || "0");
   const name  = document.getElementById('customerName').value || "-";
 
-  if (parseInt(total) === 0) {
+  if (total === 0) {
     alert("No amount to save.");
     return;
   }
 
-  count++;
-  document.getElementById('savedTable').insertAdjacentHTML('beforeend', `
-    <tr>
-      <td>${count}</td>
-      <td>${name}</td>
-      <td>₹${total}</td>
-      <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
-    </tr>
-  `);
+  const newBill = {
+    id: nextId++,
+    name: name,
+    total: total
+  };
+
+  savedBills.push(newBill);
+  saveBillsToStorage();
+  renderSavedBills();
   clearForm();
 }
 
@@ -234,9 +300,9 @@ function sendWhatsApp() {
   if (num.length === 10) num = "91" + num;
 
   const msg =
-`💠 SREE LAXMI OFFSET PRINTERS 💠
+` SREE LAXMI OFFSET PRINTERS 
 
-👤 Customer: ${name}
+ Customer: ${name}
 
 Namuna Ballot: ${document.getElementById('namunaCopies').value} copies – ₹${document.getElementById('namunaAmount').value || 0}
 Namuna Ballot 4 & 5: ${document.getElementById('namuna45Copies').value} copies – ₹${document.getElementById('namuna45Amount').value || 0}
@@ -247,23 +313,24 @@ Kanduvulu: ${document.getElementById('kanduvalCopies').value} pcs – ₹${docum
 Jenda: ${document.getElementById('jendaCopies').value} pcs – ₹${document.getElementById('jendaAmount').value || 0}
 Badges: ${document.getElementById('badgeCopies').value} pcs – ₹${document.getElementById('badgeAmount').value || 0}
 
-💰 Total: ₹${document.getElementById('grandTotal').textContent}
+ Total: ₹${document.getElementById('grandTotal').textContent}
 
-━━━━━━━━━━━━━━━━━━
 
-🌟 As the elections approach, may victory walk beside you.  
-🤝 Best wishes - Sree Lakshmi Printing Press HUZURABAD 🇮🇳
 
-📜 జరగబోయే ఈ ఎన్నికల్లో మీరు విజయం సాధించాలని  
-🙏 శ్రీ లక్ష్మీ ప్రింటింగ్ ప్రెస్ మనస్ఫూర్తిగా కోరుకుంటుంది
+ As the elections approach, may victory walk beside you.  Best wishes - Sree Lakshmi Printing Press HUZURABAD 🇮🇳
 
-━━━━━━━━━━━━━━━━━━
+ జరగబోయే ఈ ఎన్నికల్లో మీరు విజయం సాధించాలని  - శ్రీ లక్ష్మీ ప్రింటింగ్ ప్రెస్ మనస్ఫూర్తిగా కోరుకుంటుంది
 
-🙇‍♂ Thank You 🙏`;
+
+
+ Thank You `;
 
   const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
   window.open(url, "_blank");
 }
+
+// ⏱ LOAD PERMANENT LIST WHEN PAGE OPENS
+window.addEventListener('load', loadSavedBills);
 </script>
 
 </body>
