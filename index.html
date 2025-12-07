@@ -234,9 +234,9 @@ function sendWhatsApp() {
   if (num.length === 10) num = "91" + num;
 
   const msg =
-` SREE LAXMI OFFSET PRINTERS 
+`💠 SREE LAXMI OFFSET PRINTERS 💠
 
- Customer: ${name}
+👤 Customer: ${name}
 
 Namuna Ballot: ${document.getElementById('namunaCopies').value} copies – ₹${document.getElementById('namunaAmount').value || 0}
 Namuna Ballot 4 & 5: ${document.getElementById('namuna45Copies').value} copies – ₹${document.getElementById('namuna45Amount').value || 0}
@@ -247,17 +247,19 @@ Kanduvulu: ${document.getElementById('kanduvalCopies').value} pcs – ₹${docum
 Jenda: ${document.getElementById('jendaCopies').value} pcs – ₹${document.getElementById('jendaAmount').value || 0}
 Badges: ${document.getElementById('badgeCopies').value} pcs – ₹${document.getElementById('badgeAmount').value || 0}
 
- Total: ₹${document.getElementById('grandTotal').textContent}
+💰 Total: ₹${document.getElementById('grandTotal').textContent}
 
+━━━━━━━━━━━━━━━━━━
 
+🌟 As the elections approach, may victory walk beside you.  
+🤝 Best wishes - Sree Lakshmi Printing Press HUZURABAD 🇮🇳
 
-As the elections approach, may victory walk beside you. Best wishes - Sree Lakshmi Printing Press HUZURABAD 🇮🇳
+📜 జరగబోయే ఈ ఎన్నికల్లో మీరు విజయం సాధించాలని  
+🙏 శ్రీ లక్ష్మీ ప్రింటింగ్ ప్రెస్ మనస్ఫూర్తిగా కోరుకుంటుంది
 
- జరగబోయే ఈ ఎన్నికల్లో మీరు విజయం సాధించాలని  - శ్రీ లక్ష్మీ ప్రింటింగ్ ప్రెస్ మనస్ఫూర్తిగా కోరుకుంటుంది
+━━━━━━━━━━━━━━━━━━
 
-
-
-Thank You `;
+🙇‍♂ Thank You 🙏`;
 
   const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
   window.open(url, "_blank");
