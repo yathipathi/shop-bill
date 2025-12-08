@@ -138,6 +138,12 @@
 <tbody id="savedTable"></tbody>
 </table>
 
+<!-- 🔢 TALLY TOTALS OF ORIGINAL & EDITED AMOUNTS -->
+<div class="total-box" style="font-size:16px; text-align:left;">
+  Total Original Amount: ₹ <span id="totalOriginal">0</span> &nbsp;&nbsp;|&nbsp;&nbsp;
+  Total Edited Amount: ₹ <span id="totalEdited">0</span>
+</div>
+
 </div>
 
 <script>
@@ -253,15 +259,27 @@ function saveBillsToStorage() {
   }
 }
 
+// 🔁 RENDER SAVED BILLS + TALLY TOTAL ORIGINAL & EDITED
 function renderSavedBills() {
   const tbody = document.getElementById('savedTable');
   tbody.innerHTML = "";
+
+  let totalOriginal = 0;
+  let totalEdited = 0;
+
   savedBills.forEach((bill, index) => {
     const tr = document.createElement('tr');
     tr.setAttribute('data-id', bill.id);
+
     const editedText = (bill.editedTotal !== null && bill.editedTotal !== undefined)
       ? `₹${bill.editedTotal}`
       : "-";
+
+    totalOriginal += bill.originalTotal || 0;
+    if (bill.editedTotal !== null && bill.editedTotal !== undefined) {
+      totalEdited += bill.editedTotal;
+    }
+
     tr.innerHTML = `
       <td>${index + 1}</td>
       <td>${bill.name}</td>
@@ -274,7 +292,14 @@ function renderSavedBills() {
     `;
     tbody.appendChild(tr);
   });
+
   count = savedBills.length;
+
+  // 🧮 UPDATE TALLY TOTALS DISPLAY
+  const totalOriginalEl = document.getElementById('totalOriginal');
+  const totalEditedEl = document.getElementById('totalEdited');
+  if (totalOriginalEl) totalOriginalEl.textContent = totalOriginal;
+  if (totalEditedEl) totalEditedEl.textContent = totalEdited;
 }
 
 // ✏️ EDIT SAVED BILL AMOUNT (ONLY INTERNAL, DOES NOT CHANGE ORIGINAL)
@@ -317,7 +342,7 @@ function deleteRow(btn) {
   renderSavedBills();
 }
 
-// 🟢 SAVE ENTRY + ADD TO PERMANENT LIST
+// 🟢 SAVE ENTRY + ADD TO PERMANENT LIST (MANUAL BUTTON)
 function saveEntry() {
   updateTotals();
   const total = parseInt(document.getElementById('grandTotal').textContent || "0");
@@ -342,11 +367,26 @@ function saveEntry() {
 }
 
 // 📲 SEND WHATSAPP BILL (CUSTOMER SIDE – USES CURRENT FORM ONLY)
+// ALSO: AUTO-SAVE BILL TO SAVED LIST
 function sendWhatsApp() {
   updateTotals();
 
   const name = document.getElementById('customerName').value || "-";
   let num    = document.getElementById('customerWhatsapp').value.replace(/\D/g, "");
+
+  // 🔐 AUTO-SAVE CURRENT BILL BEFORE SENDING (ORIGINAL AMOUNT)
+  const totalForSave = parseInt(document.getElementById('grandTotal').textContent || "0");
+  if (totalForSave > 0) {
+    const newBill = {
+      id: nextId++,
+      name: name,
+      originalTotal: totalForSave,
+      editedTotal: null
+    };
+    savedBills.push(newBill);
+    saveBillsToStorage();
+    renderSavedBills();
+  }
 
   if (!num) {
     alert("Please enter customer WhatsApp number.");
@@ -381,7 +421,7 @@ CONTACT:8341065537
 
 ‍ Thank You `;
 
- const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+  const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
   window.open(url, "_blank");
 }
 
