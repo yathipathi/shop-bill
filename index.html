@@ -16,11 +16,12 @@
     th,td { border:1px solid #ddd; padding:6px; text-align:center; }
     th { background:#eaeaea; }
     .amount-display { background:#eaffd8; font-weight:bold; }
-    button { padding:7px 13px; border:none; border-radius:5px; margin:5px; cursor:pointer; font-weight:bold; }
+    button { padding:7px 13px; border:none; border-radius:5px; margin:3px; cursor:pointer; font-weight:bold; }
     .save-btn { background:#4CAF50; color:white; }
     .clear-btn { background:red; color:white; }
     .wa-btn { background:#25D366; color:white; }
     .delete-btn { background:#ff4757; color:white; }
+    .edit-btn { background:#ffa502; color:white; }
     .total-box { text-align:right; font-size:20px; margin-top:15px; font-weight:bold; background:#e6ffe6; padding:12px; border-radius:6px; }
 </style>
 </head>
@@ -127,7 +128,11 @@
 <table>
 <thead>
 <tr>
-  <th>S.No</th><th>Name</th><th>Amount</th><th>Action</th>
+  <th>S.No</th>
+  <th>Name</th>
+  <th>Original Amount</th>
+  <th>Edited Amount</th>
+  <th>Action</th>
 </tr>
 </thead>
 <tbody id="savedTable"></tbody>
@@ -139,7 +144,8 @@
 let count = 0;
 
 // 🔒 PERMANENT LIST STORAGE VARIABLES
-let savedBills = [];   // {id, name, total}
+// Each bill: {id, name, originalTotal, editedTotal}
+let savedBills = [];
 let nextId = 1;
 
 const price = {
@@ -207,14 +213,25 @@ function loadSavedBills() {
     if (stored) {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed)) {
-        savedBills = parsed;
+        // 🔁 Backward compatibility: older data may have {id, name, total}
+        savedBills = parsed.map(bill => {
+          if (bill.originalTotal === undefined && bill.editedTotal === undefined) {
+            // old format
+            return {
+              id: bill.id,
+              name: bill.name,
+              originalTotal: bill.total || 0,
+              editedTotal: null
+            };
+          }
+          return bill;
+        });
       }
     }
 
     if (storedNextId) {
       nextId = parseInt(storedNextId) || 1;
     } else {
-      // if no nextId stored, calculate from existing bills
       const maxId = savedBills.reduce((max, b) => Math.max(max, b.id || 0), 0);
       nextId = maxId + 1;
     }
@@ -242,15 +259,52 @@ function renderSavedBills() {
   savedBills.forEach((bill, index) => {
     const tr = document.createElement('tr');
     tr.setAttribute('data-id', bill.id);
+    const editedText = (bill.editedTotal !== null && bill.editedTotal !== undefined)
+      ? `₹${bill.editedTotal}`
+      : "-";
     tr.innerHTML = `
       <td>${index + 1}</td>
       <td>${bill.name}</td>
-      <td>₹${bill.total}</td>
-      <td><button class="delete-btn" onclick="deleteRow(this)">Delete</button></td>
+      <td>₹${bill.originalTotal}</td>
+      <td>${editedText}</td>
+      <td>
+        <button class="edit-btn" onclick="editBill(this)">Edit</button>
+        <button class="delete-btn" onclick="deleteRow(this)">Delete</button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
   count = savedBills.length;
+}
+
+// ✏️ EDIT SAVED BILL AMOUNT (ONLY INTERNAL, DOES NOT CHANGE ORIGINAL)
+function editBill(btn) {
+  const tr = btn.closest('tr');
+  const id = parseInt(tr.getAttribute('data-id'));
+
+  const bill = savedBills.find(b => b.id === id);
+  if (!bill) return;
+
+  const currentAmount = (bill.editedTotal !== null && bill.editedTotal !== undefined)
+    ? bill.editedTotal
+    : bill.originalTotal;
+
+  const newAmountStr = prompt(`Enter new edited amount for "${bill.name}"`, currentAmount);
+
+  if (newAmountStr === null) {
+    // User clicked Cancel
+    return;
+  }
+
+  const newAmount = parseInt(newAmountStr);
+  if (isNaN(newAmount) || newAmount < 0) {
+    alert("Please enter a valid amount.");
+    return;
+  }
+
+  bill.editedTotal = newAmount;
+  saveBillsToStorage();
+  renderSavedBills();
 }
 
 // 🔴 DELETE ROW + UPDATE PERMANENT STORAGE
@@ -277,7 +331,8 @@ function saveEntry() {
   const newBill = {
     id: nextId++,
     name: name,
-    total: total
+    originalTotal: total,
+    editedTotal: null
   };
 
   savedBills.push(newBill);
@@ -286,6 +341,7 @@ function saveEntry() {
   clearForm();
 }
 
+// 📲 SEND WHATSAPP BILL (CUSTOMER SIDE – USES CURRENT FORM ONLY)
 function sendWhatsApp() {
   updateTotals();
 
@@ -300,7 +356,7 @@ function sendWhatsApp() {
   if (num.length === 10) num = "91" + num;
 
   const msg =
-` SREE LAXMI OFFSET PRINTERS 
+` *SREE LAXMI OFFSET PRINTERS* 
 
  Customer: ${name}
 
@@ -313,23 +369,23 @@ Kanduvulu: ${document.getElementById('kanduvalCopies').value} pcs – ₹${docum
 Jenda: ${document.getElementById('jendaCopies').value} pcs – ₹${document.getElementById('jendaAmount').value || 0}
 Badges: ${document.getElementById('badgeCopies').value} pcs – ₹${document.getElementById('badgeAmount').value || 0}
 
- Total: ₹${document.getElementById('grandTotal').textContent}
+ *Total: ₹${document.getElementById('grandTotal').textContent}*
 
 
 
- As the elections approach, may victory walk beside you.  Best wishes - Sree Lakshmi Printing Press HUZURABAD 🇮🇳
+ As the elections approach, may victory walk beside you.  Best wishes - *Sree Lakshmi Printing Press HUZURABAD* 🇮🇳
 
- జరగబోయే ఈ ఎన్నికల్లో మీరు విజయం సాధించాలని  - శ్రీ లక్ష్మీ ప్రింటింగ్ ప్రెస్ మనస్ఫూర్తిగా కోరుకుంటుంది
+ జరగబోయే ఈ ఎన్నికల్లో మీరు విజయం సాధించాలని  శ్రీ లక్ష్మీ ప్రింటింగ్ ప్రెస్ మనస్ఫూర్తిగా కోరుకుంటుంది
 
+CONTACT:8341065537
 
+‍ Thank You `;
 
- Thank You `;
-
-  const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+ const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
   window.open(url, "_blank");
 }
 
-// ⏱ LOAD PERMANENT LIST WHEN PAGE OPENS
+// ⏱️ LOAD PERMANENT LIST WHEN PAGE OPENS
 window.addEventListener('load', loadSavedBills);
 </script>
 
