@@ -498,23 +498,89 @@ function sendWhatsApp() {
 
   if (num.length === 10) num = "91" + num;
 
+  // ✅ Build items text only for selected (non-zero) items
+  const lines = [];
+
+  const namunaCopies      = document.getElementById('namunaCopies').value || "0";
+  const namunaAmount      = parseInt(document.getElementById('namunaAmount').value || "0");
+  if (parseInt(namunaCopies) > 0 && namunaAmount > 0) {
+    lines.push(`Namuna Ballot: ${namunaCopies} copies – ₹${namunaAmount}`);
+  }
+
+  const namuna45Copies    = document.getElementById('namuna45Copies').value || "0";
+  const namuna45Amount    = parseInt(document.getElementById('namuna45Amount').value || "0");
+  if (parseInt(namuna45Copies) > 0 && namuna45Amount > 0) {
+    lines.push(`Namuna Ballot 4 & 5: ${namuna45Copies} copies – ₹${namuna45Amount}`);
+  }
+
+  const namuna9Copies     = document.getElementById('namuna9Copies').value || "0";
+  const namuna9Amount     = parseInt(document.getElementById('namuna9Amount').value || "0");
+  if (parseInt(namuna9Copies) > 0 && namuna9Amount > 0) {
+    lines.push(`Namuna Ballot 9 Symbols: ${namuna9Copies} copies – ₹${namuna9Amount}`);
+  }
+
+  const handslipCopies    = document.getElementById('handslipCopies').value || "0";
+  const handslipAmount    = parseInt(document.getElementById('handslipAmount').value || "0");
+  if (parseInt(handslipCopies) > 0 && handslipAmount > 0) {
+    lines.push(`Handslips: ${handslipCopies} copies – ₹${handslipAmount}`);
+  }
+
+  const posterCopies      = document.getElementById('posterCopies').value || "0";
+  const posterAmount      = parseInt(document.getElementById('posterAmount').value || "0");
+  if (parseInt(posterCopies) > 0 && posterAmount > 0) {
+    lines.push(`Posters: ${posterCopies} copies – ₹${posterAmount}`);
+  }
+
+  const mixedPosterCopies = document.getElementById('mixedPosterCopies').value || "0";
+  const mixedPosterAmount = parseInt(document.getElementById('mixedPosterAmount').value || "0");
+  if (parseInt(mixedPosterCopies) > 0 && mixedPosterAmount > 0) {
+    lines.push(`Mixed Posters: ${mixedPosterCopies} copies – ₹${mixedPosterAmount}`);
+  }
+
+  const mixedStickerCopies = document.getElementById('mixedStickerCopies').value || "0";
+  const mixedStickerAmount = parseInt(document.getElementById('mixedStickerAmount').value || "0");
+  if (parseInt(mixedStickerCopies) > 0 && mixedStickerAmount > 0) {
+    lines.push(`Mixed Stickers: ${mixedStickerCopies} pcs – ₹${mixedStickerAmount}`);
+  }
+
+  const stickerCopies     = document.getElementById('stickerCopies').value || "0";
+  const stickerAmount     = parseInt(document.getElementById('stickerAmount').value || "0");
+  if (parseInt(stickerCopies) > 0 && stickerAmount > 0) {
+    lines.push(`Stickers: ${stickerCopies} pcs – ₹${stickerAmount}`);
+  }
+
+  const kanduvalCopies    = document.getElementById('kanduvalCopies').value || "0";
+  const kanduvalAmount    = parseInt(document.getElementById('kanduvalAmount').value || "0");
+  if (parseInt(kanduvalCopies) > 0 && kanduvalAmount > 0) {
+    lines.push(`Kanduvulu: ${kanduvalCopies} pcs – ₹${kanduvalAmount}`);
+  }
+
+  const jendaCopies       = document.getElementById('jendaCopies').value || "0";
+  const jendaAmount       = parseInt(document.getElementById('jendaAmount').value || "0");
+  if (parseInt(jendaCopies) > 0 && jendaAmount > 0) {
+    lines.push(`Jenda: ${jendaCopies} pcs – ₹${jendaAmount}`);
+  }
+
+  const badgeCopies       = document.getElementById('badgeCopies').value || "0";
+  const badgeAmount       = parseInt(document.getElementById('badgeAmount').value || "0");
+  if (parseInt(badgeCopies) > 0 && badgeAmount > 0) {
+    lines.push(`Badges: ${badgeCopies} pcs – ₹${badgeAmount}`);
+  }
+
+  if (lines.length === 0) {
+    alert("Please select at least one item before sending the WhatsApp bill.");
+    return;
+  }
+
+  const itemsText = lines.join('\n');
+
   const msg =
 ` *SREE LAXMI OFFSET PRINTERS* 
 
  Customer: ${name}
  Date: ${date}
 
-Namuna Ballot: ${document.getElementById('namunaCopies').value} copies – ₹${document.getElementById('namunaAmount').value || 0}
-Namuna Ballot 4 & 5: ${document.getElementById('namuna45Copies').value} copies – ₹${document.getElementById('namuna45Amount').value || 0}
-Namuna Ballot 9 Symbols: ${document.getElementById('namuna9Copies').value} copies – ₹${document.getElementById('namuna9Amount').value || 0}
-Handslips: ${document.getElementById('handslipCopies').value} copies – ₹${document.getElementById('handslipAmount').value || 0}
-Posters: ${document.getElementById('posterCopies').value} copies – ₹${document.getElementById('posterAmount').value || 0}
-Mixed Posters: ${document.getElementById('mixedPosterCopies').value} copies – ₹${document.getElementById('mixedPosterAmount').value || 0}
-Mixed Stickers: ${document.getElementById('mixedStickerCopies').value} pcs – ₹${document.getElementById('mixedStickerAmount').value || 0}
-Stickers: ${document.getElementById('stickerCopies').value} pcs – ₹${document.getElementById('stickerAmount').value || 0}
-Kanduvulu: ${document.getElementById('kanduvalCopies').value} pcs – ₹${document.getElementById('kanduvalAmount').value || 0}
-Jenda: ${document.getElementById('jendaCopies').value} pcs – ₹${document.getElementById('jendaAmount').value || 0}
-Badges: ${document.getElementById('badgeCopies').value} pcs – ₹${document.getElementById('badgeAmount').value || 0}
+${itemsText}
 
  *Total: ₹${document.getElementById('grandTotal').textContent}*
 
@@ -529,7 +595,6 @@ CONTACT:8341065537
 ‍ Thank You `;
 
   const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
-  window.open(url, "_blank");
   window.open(url, "_blank");
 }
 
