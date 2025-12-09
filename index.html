@@ -43,6 +43,11 @@
 
 <br><br>
 
+<label><b>Date:</b></label>
+<input type="text" id="billDate" readonly>
+
+<br><br>
+
 <!-- ================= Sections ================= -->
 
 <fieldset>
@@ -130,6 +135,7 @@
 <tr>
   <th>S.No</th>
   <th>Name</th>
+  <th>Date</th>
   <th>Original Amount</th>
   <th>Edited Amount</th>
   <th>Action</th>
@@ -150,7 +156,7 @@
 let count = 0;
 
 // 🔒 PERMANENT LIST STORAGE VARIABLES
-// Each bill: {id, name, originalTotal, editedTotal}
+// Each bill: {id, name, date, originalTotal, editedTotal}
 let savedBills = [];
 let nextId = 1;
 
@@ -204,10 +210,13 @@ document.querySelectorAll("select").forEach(el => {
 
 function clearForm() {
   document.querySelectorAll("input,select").forEach(el => {
+    if (el.id === 'billDate') return; // don't clear date here
     if (el.tagName.toLowerCase() === 'select') el.value = "0";
     else el.value = "";
   });
   document.getElementById('grandTotal').textContent = "0";
+  // reset date to today's date again
+  document.getElementById("billDate").value = new Date().toLocaleDateString("en-IN");
 }
 
 // 🔒 PERMANENT LIST: LOAD FROM localStorage ON PAGE LOAD
@@ -226,11 +235,19 @@ function loadSavedBills() {
             return {
               id: bill.id,
               name: bill.name,
+              date: bill.date || "-", // old ones may not have date
               originalTotal: bill.total || 0,
               editedTotal: null
             };
           }
-          return bill;
+          // ensure date key exists
+          return {
+            id: bill.id,
+            name: bill.name,
+            date: bill.date || "-",
+            originalTotal: bill.originalTotal || 0,
+            editedTotal: (bill.editedTotal === undefined ? null : bill.editedTotal)
+          };
         });
       }
     }
@@ -283,6 +300,7 @@ function renderSavedBills() {
     tr.innerHTML = `
       <td>${index + 1}</td>
       <td>${bill.name}</td>
+      <td>${bill.date || "-"}</td>
       <td>₹${bill.originalTotal}</td>
       <td>${editedText}</td>
       <td>
@@ -347,6 +365,7 @@ function saveEntry() {
   updateTotals();
   const total = parseInt(document.getElementById('grandTotal').textContent || "0");
   const name  = document.getElementById('customerName').value || "-";
+  const date  = document.getElementById('billDate').value || new Date().toLocaleDateString("en-IN");
 
   if (total === 0) {
     alert("No amount to save.");
@@ -356,6 +375,7 @@ function saveEntry() {
   const newBill = {
     id: nextId++,
     name: name,
+    date: date,
     originalTotal: total,
     editedTotal: null
   };
@@ -373,6 +393,7 @@ function sendWhatsApp() {
 
   const name = document.getElementById('customerName').value || "-";
   let num    = document.getElementById('customerWhatsapp').value.replace(/\D/g, "");
+  const date = document.getElementById('billDate').value || new Date().toLocaleDateString("en-IN");
 
   // 🔐 AUTO-SAVE CURRENT BILL BEFORE SENDING (ORIGINAL AMOUNT)
   const totalForSave = parseInt(document.getElementById('grandTotal').textContent || "0");
@@ -380,6 +401,7 @@ function sendWhatsApp() {
     const newBill = {
       id: nextId++,
       name: name,
+      date: date,
       originalTotal: totalForSave,
       editedTotal: null
     };
@@ -399,6 +421,7 @@ function sendWhatsApp() {
 ` *SREE LAXMI OFFSET PRINTERS* 
 
  Customer: ${name}
+ Date: ${date}
 
 Namuna Ballot: ${document.getElementById('namunaCopies').value} copies – ₹${document.getElementById('namunaAmount').value || 0}
 Namuna Ballot 4 & 5: ${document.getElementById('namuna45Copies').value} copies – ₹${document.getElementById('namuna45Amount').value || 0}
@@ -425,8 +448,14 @@ CONTACT:8341065537
   window.open(url, "_blank");
 }
 
-// ⏱️ LOAD PERMANENT LIST WHEN PAGE OPENS
-window.addEventListener('load', loadSavedBills);
+// ⏱️ LOAD PERMANENT LIST WHEN PAGE OPENS + SET TODAY'S DATE
+window.addEventListener('load', () => {
+  loadSavedBills();
+  const dateInput = document.getElementById("billDate");
+  if (dateInput) {
+    dateInput.value = new Date().toLocaleDateString("en-IN");
+  }
+});
 </script>
 
 </body>
