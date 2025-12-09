@@ -39,7 +39,7 @@
 <br><br>
 
 <label><b>Customer WhatsApp Number:</b></label>
-<input type="text" id="customerWhatsapp" placeholder="Enter 10 digit mobile">
+<input type="text" id="customerWhatsapp" placeholder="Ex: 8341065537 or +918341065537">
 
 <br><br>
 
@@ -182,6 +182,7 @@
 <tbody id="savedTable"></tbody>
 </table>
 
+<!-- 🔢 TALLY TOTALS OF ORIGINAL & EDITED AMOUNTS -->
 <div class="total-box" style="font-size:16px; text-align:left;">
   Total Original Amount: ₹ <span id="totalOriginal">0</span> &nbsp;&nbsp;|&nbsp;&nbsp;
   Total Edited Amount: ₹ <span id="totalEdited">0</span>
@@ -194,22 +195,24 @@ let count = 0;
 let savedBills = [];
 let nextId = 1;
 
+// Poster base prices (100–1000)
 const posterPrice = {
   0:0, 100:450, 200:700, 300:800, 400:1000,
   500:1200, 600:1400, 700:1600, 800:1800, 900:2000, 1000:2200
 };
 
+// ===== PRICE HELPERS =====
 function getNamunaPrice(copies) {
   const c = parseInt(copies) || 0;
   if (c <= 0) return 0;
-  if (c > 2000) return 250 + 2000;
+  if (c > 2000) return 2250;  // 250 + 2000
   return 250 + c;
 }
 
 function getNamuna9Price(copies) {
   const c = parseInt(copies) || 0;
   if (c <= 0) return 0;
-  if (c > 2000) return 300 + 2000;
+  if (c > 2000) return 2300;  // 300 + 2000
   return 300 + c;
 }
 
@@ -237,13 +240,13 @@ function getMixedStickerAmount(qty) {
 }
 
 function updateTotals() {
-  const namunaCopies      = document.getElementById('namunaCopies').value;
-  const namuna45Copies    = document.getElementById('namuna45Copies').value;
-  const namuna9Copies     = document.getElementById('namuna9Copies').value;
-  const handslipCopies    = document.getElementById('handslipCopies').value;
-  const posterCopies      = document.getElementById('posterCopies').value;
-  const mixedPosterCopies = document.getElementById('mixedPosterCopies').value;
-  const mixedStickerQty   = document.getElementById('mixedStickerCopies').value;
+  const namunaCopies      = document.getElementById('namunaCopies').value || "0";
+  const namuna45Copies    = document.getElementById('namuna45Copies').value || "0";
+  const namuna9Copies     = document.getElementById('namuna9Copies').value || "0";
+  const handslipCopies    = document.getElementById('handslipCopies').value || "0";
+  const posterCopies      = document.getElementById('posterCopies').value || "0";
+  const mixedPosterCopies = document.getElementById('mixedPosterCopies').value || "0";
+  const mixedStickerQty   = document.getElementById('mixedStickerCopies').value || "0";
   const stickerQty        = parseInt(document.getElementById('stickerCopies').value || 0);
   const kanduvalQty       = parseInt(document.getElementById('kanduvalCopies').value || 0);
   const jendaQty          = parseInt(document.getElementById('jendaCopies').value || 0);
@@ -256,30 +259,34 @@ function updateTotals() {
   const p   = getPosterPrice(posterCopies);
   const mp  = getMixedPosterPrice(mixedPosterCopies);
   const ms  = getMixedStickerAmount(mixedStickerQty);
+  const s   = stickerQty * 50;
+  const k   = kanduvalQty * 15;
+  const j   = jendaQty * 20;
+  const b   = badgeQty * 5;
 
-  const s = stickerQty * 50;
-  const k = kanduvalQty * 15;
-  const j = jendaQty * 20;
-  const b = badgeQty * 5;
-
-  document.getElementById('namunaAmount').value = n || "";
-  document.getElementById('namuna45Amount').value = n45 || "";
-  document.getElementById('namuna9Amount').value = n9 || "";
-  document.getElementById('handslipAmount').value = h || "";
-  document.getElementById('posterAmount').value = p || "";
-  document.getElementById('mixedPosterAmount').value = mp || "";
-  document.getElementById('mixedStickerAmount').value = ms || "";
-  document.getElementById('stickerAmount').value = s || "";
-  document.getElementById('kanduvalAmount').value = k || "";
-  document.getElementById('jendaAmount').value = j || "";
-  document.getElementById('badgeAmount').value = b || "";
+  document.getElementById('namunaAmount').value        = n   || "";
+  document.getElementById('namuna45Amount').value      = n45 || "";
+  document.getElementById('namuna9Amount').value       = n9  || "";
+  document.getElementById('handslipAmount').value      = h   || "";
+  document.getElementById('posterAmount').value        = p   || "";
+  document.getElementById('mixedPosterAmount').value   = mp  || "";
+  document.getElementById('mixedStickerAmount').value  = ms  || "";
+  document.getElementById('stickerAmount').value       = s   || "";
+  document.getElementById('kanduvalAmount').value      = k   || "";
+  document.getElementById('jendaAmount').value         = j   || "";
+  document.getElementById('badgeAmount').value         = b   || "";
 
   document.getElementById('grandTotal').textContent =
     n + n45 + n9 + h + p + mp + ms + s + k + j + b;
 }
 
-document.querySelectorAll("input").forEach(el => el.addEventListener("input", updateTotals));
-document.querySelectorAll("select").forEach(el => el.addEventListener("change", updateTotals));
+// INPUT EVENTS
+document.querySelectorAll("input").forEach(el => {
+  el.addEventListener("input", updateTotals);
+});
+document.querySelectorAll("select").forEach(el => {
+  el.addEventListener("change", updateTotals);
+});
 
 function clearForm() {
   document.querySelectorAll("input,select").forEach(el => {
@@ -287,11 +294,11 @@ function clearForm() {
     if (el.tagName.toLowerCase() === 'select') el.value = "0";
     else el.value = "";
   });
-
   document.getElementById('grandTotal').textContent = "0";
   document.getElementById("billDate").value = new Date().toLocaleDateString("en-IN");
 }
 
+// LOAD SAVED BILLS
 function loadSavedBills() {
   try {
     const stored = localStorage.getItem('slp_savedBills');
@@ -300,50 +307,78 @@ function loadSavedBills() {
     if (stored) {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed)) {
-        savedBills = parsed.map(bill => ({
-          id: bill.id,
-          name: bill.name,
-          date: bill.date || "-",
-          originalTotal: bill.originalTotal || bill.total || 0,
-          editedTotal: bill.editedTotal ?? null
-        }));
+        savedBills = parsed.map(bill => {
+          if (bill.originalTotal === undefined && bill.editedTotal === undefined) {
+            return {
+              id: bill.id,
+              name: bill.name,
+              date: bill.date || "-",
+              originalTotal: bill.total || 0,
+              editedTotal: null
+            };
+          }
+          return {
+            id: bill.id,
+            name: bill.name,
+            date: bill.date || "-",
+            originalTotal: bill.originalTotal || 0,
+            editedTotal: (bill.editedTotal === undefined ? null : bill.editedTotal)
+          };
+        });
       }
     }
 
-    if (storedNextId) nextId = parseInt(storedNextId) || 1;
-    else nextId = (savedBills.reduce((m, b) => Math.max(m, b.id), 0)) + 1;
+    if (storedNextId) {
+      nextId = parseInt(storedNextId) || 1;
+    } else {
+      const maxId = savedBills.reduce((max, b) => Math.max(max, b.id || 0), 0);
+      nextId = maxId + 1;
+    }
 
     renderSavedBills();
   } catch (e) {
-    console.error("Error loading:", e);
+    console.error("Error loading saved bills:", e);
     savedBills = [];
     nextId = 1;
   }
 }
 
 function saveBillsToStorage() {
-  localStorage.setItem('slp_savedBills', JSON.stringify(savedBills));
-  localStorage.setItem('slp_nextId', nextId);
+  try {
+    localStorage.setItem('slp_savedBills', JSON.stringify(savedBills));
+    localStorage.setItem('slp_nextId', String(nextId));
+  } catch (e) {
+    console.error("Error saving bills:", e);
+  }
 }
 
+// RENDER SAVED BILLS
 function renderSavedBills() {
   const tbody = document.getElementById('savedTable');
   tbody.innerHTML = "";
 
-  let totalOriginal = 0, totalEdited = 0;
+  let totalOriginal = 0;
+  let totalEdited = 0;
 
   savedBills.forEach((bill, index) => {
-    totalOriginal += bill.originalTotal;
-    if (bill.editedTotal !== null) totalEdited += bill.editedTotal;
-
     const tr = document.createElement('tr');
     tr.setAttribute('data-id', bill.id);
+
+    const editedText = (bill.editedTotal !== null && bill.editedTotal !== undefined)
+      ? `₹${bill.editedTotal}`
+      : "-";
+
+    totalOriginal += bill.originalTotal || 0;
+    if (bill.editedTotal !== null && bill.editedTotal !== undefined) {
+      totalEdited += bill.editedTotal;
+    }
+
     tr.innerHTML = `
       <td>${index + 1}</td>
       <td>${bill.name}</td>
-      <td>${bill.date}</td>
+      <td>${bill.date || "-"}</td>
       <td>₹${bill.originalTotal}</td>
-      <td>${bill.editedTotal !== null ? "₹" + bill.editedTotal : "-"}</td>
+      <td>${editedText}</td>
       <td>
         <button class="edit-btn" onclick="editBill(this)">Edit</button>
         <button class="delete-btn" onclick="deleteRow(this)">Delete</button>
@@ -352,24 +387,29 @@ function renderSavedBills() {
     tbody.appendChild(tr);
   });
 
-  document.getElementById('totalOriginal').textContent = totalOriginal;
-  document.getElementById('totalEdited').textContent = totalEdited;
+  const totalOriginalEl = document.getElementById('totalOriginal');
+  const totalEditedEl = document.getElementById('totalEdited');
+  if (totalOriginalEl) totalOriginalEl.textContent = totalOriginal;
+  if (totalEditedEl) totalEditedEl.textContent = totalEdited;
 }
 
 function editBill(btn) {
   const tr = btn.closest('tr');
   const id = parseInt(tr.getAttribute('data-id'));
+
   const bill = savedBills.find(b => b.id === id);
   if (!bill) return;
 
-  const currentAmount = bill.editedTotal ?? bill.originalTotal;
+  const currentAmount = (bill.editedTotal !== null && bill.editedTotal !== undefined)
+    ? bill.editedTotal
+    : bill.originalTotal;
 
   const newAmountStr = prompt(`Enter new edited amount for "${bill.name}"`, currentAmount);
   if (newAmountStr === null) return;
 
   const newAmount = parseInt(newAmountStr);
   if (isNaN(newAmount) || newAmount < 0) {
-    alert("Invalid amount");
+    alert("Please enter a valid amount.");
     return;
   }
 
@@ -381,114 +421,156 @@ function editBill(btn) {
 function deleteRow(btn) {
   const tr = btn.closest('tr');
   const id = parseInt(tr.getAttribute('data-id'));
-
-  savedBills = savedBills.filter(b => b.id !== id);
+  savedBills = savedBills.filter(bill => bill.id !== id);
   saveBillsToStorage();
   renderSavedBills();
 }
 
 function saveEntry() {
   updateTotals();
+  const total = parseInt(document.getElementById('grandTotal').textContent || "0");
+  const name  = document.getElementById('customerName').value || "-";
+  const date  = document.getElementById('billDate').value || new Date().toLocaleDateString("en-IN");
 
-  const total = parseInt(document.getElementById('grandTotal').textContent);
-  if (total === 0) return alert("No amount to save.");
+  if (total === 0) {
+    alert("No amount to save.");
+    return;
+  }
 
-  const name = document.getElementById('customerName').value || "-";
-  const date = document.getElementById('billDate').value;
-
-  savedBills.push({
+  const newBill = {
     id: nextId++,
-    name,
-    date,
+    name: name,
+    date: date,
     originalTotal: total,
     editedTotal: null
-  });
+  };
 
+  savedBills.push(newBill);
   saveBillsToStorage();
   renderSavedBills();
   clearForm();
 }
 
+// ===== NORMALISE WHATSAPP NUMBER =====
+function normalizeWhatsAppNumber(input) {
+  let digits = (input || "").replace(/\D/g, ""); // keep only numbers
+
+  if (!digits) return null;
+
+  // remove leading 00 if present (international format)
+  if (digits.startsWith("00")) {
+    digits = digits.slice(2);
+  }
+
+  // Indian mobile typed as 10 digits
+  if (digits.length === 10) {
+    return "91" + digits;
+  }
+
+  // Indian mobile typed as 0XXXXXXXXXX (11 digits)
+  if (digits.length === 11 && digits.startsWith("0")) {
+    return "91" + digits.slice(1);
+  }
+
+  // Already has country code, 11–15 digits, not starting with 0
+  if (digits.length >= 11 && digits.length <= 15 && !digits.startsWith("0")) {
+    return digits;
+  }
+
+  // Anything else is suspicious
+  return null;
+}
+
+// SEND WHATSAPP BILL
 function sendWhatsApp() {
   updateTotals();
 
   const name = document.getElementById('customerName').value || "-";
-  let num = document.getElementById('customerWhatsapp').value.replace(/\D/g, "");
-  const date = document.getElementById('billDate').value;
+  const rawNum = document.getElementById('customerWhatsapp').value;
+  const date = document.getElementById('billDate').value || new Date().toLocaleDateString("en-IN");
 
-  const total = parseInt(document.getElementById('grandTotal').textContent);
-  if (total > 0) {
-    savedBills.push({
+  const num = normalizeWhatsAppNumber(rawNum);
+  if (!num) {
+    alert("Please enter a valid WhatsApp number.\nExamples:\n8341065537\n+918341065537");
+    return;
+  }
+
+  const totalForSave = parseInt(document.getElementById('grandTotal').textContent || "0");
+  if (totalForSave > 0) {
+    const newBill = {
       id: nextId++,
-      name,
-      date,
-      originalTotal: total,
+      name: name,
+      date: date,
+      originalTotal: totalForSave,
       editedTotal: null
-    });
+    };
+    savedBills.push(newBill);
     saveBillsToStorage();
     renderSavedBills();
   }
 
-  if (!num) return alert("Enter WhatsApp number.");
-  if (num.length === 10) num = "91" + num;
-
   const lines = [];
 
-  function addLine(label, copiesId, amountId) {
-    const copies = document.getElementById(copiesId).value;
-    const amount = parseInt(document.getElementById(amountId).value || 0);
-    if (parseInt(copies) > 0 && amount > 0) {
-      lines.push(`${label}: ${copies} – ₹${amount}`);
+  const addLineIfAny = (label, copiesId, amountId, unit) => {
+    const qty = document.getElementById(copiesId).value || "0";
+    const amt = parseInt(document.getElementById(amountId).value || "0");
+    if (parseInt(qty) > 0 && amt > 0) {
+      lines.push(`${label}: ${qty} ${unit} – ₹${amt}`);
     }
+  };
+
+  addLineIfAny("Namuna Ballot", "namunaCopies", "namunaAmount", "copies");
+  addLineIfAny("Namuna Ballot 4 & 5", "namuna45Copies", "namuna45Amount", "copies");
+  addLineIfAny("Namuna Ballot 9 Symbols", "namuna9Copies", "namuna9Amount", "copies");
+  addLineIfAny("Handslips", "handslipCopies", "handslipAmount", "copies");
+  addLineIfAny("Posters", "posterCopies", "posterAmount", "copies");
+  addLineIfAny("Mixed Posters", "mixedPosterCopies", "mixedPosterAmount", "copies");
+  addLineIfAny("Mixed Stickers", "mixedStickerCopies", "mixedStickerAmount", "pcs");
+  addLineIfAny("Stickers", "stickerCopies", "stickerAmount", "pcs");
+  addLineIfAny("Kanduvulu", "kanduvalCopies", "kanduvalAmount", "pcs");
+  addLineIfAny("Jenda", "jendaCopies", "jendaAmount", "pcs");
+  addLineIfAny("Badges", "badgeCopies", "badgeAmount", "pcs");
+
+  if (lines.length === 0) {
+    alert("Please select at least one item before sending the WhatsApp bill.");
+    return;
   }
 
-  addLine("Namuna Ballot", "namunaCopies", "namunaAmount");
-  addLine("Namuna Ballot 4 & 5", "namuna45Copies", "namuna45Amount");
-  addLine("Namuna Ballot 9 Symbols", "namuna9Copies", "namuna9Amount");
-  addLine("Handslips", "handslipCopies", "handslipAmount");
-  addLine("Posters", "posterCopies", "posterAmount");
-  addLine("Mixed Posters", "mixedPosterCopies", "mixedPosterAmount");
-  addLine("Mixed Stickers", "mixedStickerCopies", "mixedStickerAmount");
-  addLine("Stickers", "stickerCopies", "stickerAmount");
-  addLine("Kanduvulu", "kanduvalCopies", "kanduvalAmount");
-  addLine("Jenda", "jendaCopies", "jendaAmount");
-  addLine("Badges", "badgeCopies", "badgeAmount");
-
-  if (lines.length === 0) return alert("Select at least one item.");
+  const itemsText = lines.join('\n');
 
   const msg =
-`SREE LAXMI OFFSET PRINTERS
+` *SREE LAXMI OFFSET PRINTERS* 
 
-Customer: ${name}
-Date: ${date}
+ Customer: ${name}
+ Date: ${date}
 
-${lines.join('\n')}
+${itemsText}
 
-Total: ₹${total}
+ *Total: ₹${document.getElementById('grandTotal').textContent}*
 
-As the elections approach, may victory walk beside you.
-Best wishes - Sree Lakshmi Printing Press HUZURABAD 🇮🇳
 
-జరగబోయే ఎన్నికల్లో మీరు విజయం సాధించాలని
-శ్రీ లక్ష్మీ ప్రింటింగ్ ప్రెస్ మనస్ఫూర్తిగా కోరుకుంటుంది.
 
-CONTACT: 8341065537
+ As the elections approach, may victory walk beside you.  Best wishes - *Sree Lakshmi Printing Press HUZURABAD* 🇮🇳
 
-Thank You`;
+ జరగబోయే ఈ ఎన్నికల్లో మీరు విజయం సాధించాలని  శ్రీ లక్ష్మీ ప్రింటింగ్ ప్రెస్ మనస్ఫూర్తిగా కోరుకుంటుంది
 
-  const encoded = encodeURIComponent(msg);
+CONTACT:8341065537
 
-  let url = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-    ? `https://wa.me/${num}?text=${encoded}`
-    : `https://web.whatsapp.com/send?phone=${num}&text=${encoded}`;
+‍ Thank You `;
 
+  const encodedText = encodeURIComponent(msg);
+  const url = `https://wa.me/${num}?text=${encodedText}`;
   window.open(url, "_blank");
 }
 
-window.onload = () => {
+// ON LOAD
+window.addEventListener('load', () => {
   loadSavedBills();
-  document.getElementById('billDate').value = new Date().toLocaleDateString("en-IN");
-};
+  const dateInput = document.getElementById("billDate");
+  if (dateInput) {
+    dateInput.value = new Date().toLocaleDateString("en-IN");
+  }
+});
 </script>
 
 </body>
