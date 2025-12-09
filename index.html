@@ -111,6 +111,24 @@
 </fieldset>
 
 <fieldset>
+  <legend>Mixed Posters</legend>
+  <select id="mixedPosterCopies">
+    <option value="0">Select</option>
+    <option>100</option><option>200</option><option>300</option><option>400</option><option>500</option>
+    <option>600</option><option>700</option><option>800</option><option>900</option><option>1000</option>
+    <option>1100</option><option>1200</option><option>1300</option><option>1400</option><option>1500</option>
+    <option>1600</option><option>1700</option><option>1800</option><option>1900</option><option>2000</option>
+  </select>
+  <input type="text" id="mixedPosterAmount" readonly class="amount-display">
+</fieldset>
+
+<fieldset>
+  <legend>Mixed Stickers (₹70 Each)</legend>
+  <input type="number" id="mixedStickerCopies" placeholder="Enter quantity">
+  <input type="text" id="mixedStickerAmount" readonly class="amount-display">
+</fieldset>
+
+<fieldset>
   <legend>Stickers (₹50 Each)</legend>
   <input type="number" id="stickerCopies" placeholder="Enter quantity">
   <input type="text" id="stickerAmount" readonly class="amount-display">
@@ -218,38 +236,59 @@ function getPosterPrice(copies) {
   return 2200 + extraSteps * 200;
 }
 
+// Mixed Posters: 100=400, 200=800 => price = copies * 4
+function getMixedPosterPrice(copies) {
+  let c = parseInt(copies) || 0;
+  if (c <= 0) return 0;
+  if (c > 2000) c = 2000;
+  return c * 4;
+}
+
+// Mixed Stickers: ₹70 each
+function getMixedStickerAmount(qty) {
+  const q = parseInt(qty) || 0;
+  return q * 70;
+}
+
 function updateTotals() {
-  const namunaCopies   = document.getElementById('namunaCopies').value || "0";
-  const namuna45Copies = document.getElementById('namuna45Copies').value || "0";
-  const namuna9Copies  = document.getElementById('namuna9Copies').value || "0";
-  const handslipCopies = document.getElementById('handslipCopies').value || "0";
-  const posterCopies   = document.getElementById('posterCopies').value || "0";
-  const stickerQty     = parseInt(document.getElementById('stickerCopies').value || 0);
-  const kanduvalQty    = parseInt(document.getElementById('kanduvalCopies').value || 0);
-  const jendaQty       = parseInt(document.getElementById('jendaCopies').value || 0);
-  const badgeQty       = parseInt(document.getElementById('badgeCopies').value || 0);
+  const namunaCopies      = document.getElementById('namunaCopies').value || "0";
+  const namuna45Copies    = document.getElementById('namuna45Copies').value || "0";
+  const namuna9Copies     = document.getElementById('namuna9Copies').value || "0";
+  const handslipCopies    = document.getElementById('handslipCopies').value || "0";
+  const posterCopies      = document.getElementById('posterCopies').value || "0";
+  const mixedPosterCopies = document.getElementById('mixedPosterCopies').value || "0";
+  const mixedStickerQty   = document.getElementById('mixedStickerCopies').value || "0";
+  const stickerQty        = parseInt(document.getElementById('stickerCopies').value || 0);
+  const kanduvalQty       = parseInt(document.getElementById('kanduvalCopies').value || 0);
+  const jendaQty          = parseInt(document.getElementById('jendaCopies').value || 0);
+  const badgeQty          = parseInt(document.getElementById('badgeCopies').value || 0);
 
   const n   = getNamunaPrice(namunaCopies);
   const n45 = getNamunaPrice(namuna45Copies);
   const n9  = getNamuna9Price(namuna9Copies);
   const h   = getNamunaPrice(handslipCopies);
   const p   = getPosterPrice(posterCopies);
+  const mp  = getMixedPosterPrice(mixedPosterCopies);
+  const ms  = getMixedStickerAmount(mixedStickerQty);
   const s   = stickerQty * 50;
   const k   = kanduvalQty * 15;
   const j   = jendaQty * 20;
   const b   = badgeQty * 5;
 
-  document.getElementById('namunaAmount').value   = n   || "";
-  document.getElementById('namuna45Amount').value = n45 || "";
-  document.getElementById('namuna9Amount').value  = n9  || "";
-  document.getElementById('handslipAmount').value = h   || "";
-  document.getElementById('posterAmount').value   = p   || "";
-  document.getElementById('stickerAmount').value  = s   || "";
-  document.getElementById('kanduvalAmount').value = k   || "";
-  document.getElementById('jendaAmount').value    = j   || "";
-  document.getElementById('badgeAmount').value    = b   || "";
+  document.getElementById('namunaAmount').value        = n   || "";
+  document.getElementById('namuna45Amount').value      = n45 || "";
+  document.getElementById('namuna9Amount').value       = n9  || "";
+  document.getElementById('handslipAmount').value      = h   || "";
+  document.getElementById('posterAmount').value        = p   || "";
+  document.getElementById('mixedPosterAmount').value   = mp  || "";
+  document.getElementById('mixedStickerAmount').value  = ms  || "";
+  document.getElementById('stickerAmount').value       = s   || "";
+  document.getElementById('kanduvalAmount').value      = k   || "";
+  document.getElementById('jendaAmount').value         = j   || "";
+  document.getElementById('badgeAmount').value         = b   || "";
 
-  document.getElementById('grandTotal').textContent = n + n45 + n9 + h + p + s + k + j + b;
+  document.getElementById('grandTotal').textContent =
+    n + n45 + n9 + h + p + mp + ms + s + k + j + b;
 }
 
 // 🟢 Use 'input' for text/number, 'change' for dropdowns
@@ -470,6 +509,8 @@ Namuna Ballot 4 & 5: ${document.getElementById('namuna45Copies').value} copies �
 Namuna Ballot 9 Symbols: ${document.getElementById('namuna9Copies').value} copies – ₹${document.getElementById('namuna9Amount').value || 0}
 Handslips: ${document.getElementById('handslipCopies').value} copies – ₹${document.getElementById('handslipAmount').value || 0}
 Posters: ${document.getElementById('posterCopies').value} copies – ₹${document.getElementById('posterAmount').value || 0}
+Mixed Posters: ${document.getElementById('mixedPosterCopies').value} copies – ₹${document.getElementById('mixedPosterAmount').value || 0}
+Mixed Stickers: ${document.getElementById('mixedStickerCopies').value} pcs – ₹${document.getElementById('mixedStickerAmount').value || 0}
 Stickers: ${document.getElementById('stickerCopies').value} pcs – ₹${document.getElementById('stickerAmount').value || 0}
 Kanduvulu: ${document.getElementById('kanduvalCopies').value} pcs – ₹${document.getElementById('kanduvalAmount').value || 0}
 Jenda: ${document.getElementById('jendaCopies').value} pcs – ₹${document.getElementById('jendaAmount').value || 0}
@@ -479,7 +520,7 @@ Badges: ${document.getElementById('badgeCopies').value} pcs – ₹${document.ge
 
 
 
- As the elections approach, may victory walk beside you.  Best wishes - *Sree Lakshmi Printing Press HUZURABAD* 
+ As the elections approach, may victory walk beside you.  Best wishes - *Sree Lakshmi Printing Press HUZURABAD* 🇮🇳
 
  జరగబోయే ఈ ఎన్నికల్లో మీరు విజయం సాధించాలని  శ్రీ లక్ష్మీ ప్రింటింగ్ ప్రెస్ మనస్ఫూర్తిగా కోరుకుంటుంది
 
@@ -488,6 +529,7 @@ CONTACT:8341065537
 ‍ Thank You `;
 
   const url = `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+  window.open(url, "_blank");
   window.open(url, "_blank");
 }
 
