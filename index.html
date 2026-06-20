@@ -151,11 +151,87 @@
   }
   .actions{display:flex;gap:12px;margin-top:18px;}
   .actions .btn{flex:1;}
+
+  /* Petrol Pump Stop modal */
+  .fuel-trigger{
+    width:100%;
+    background:transparent;
+    border:1px solid #5a2e16;
+    color:#ff8a4c;
+    border-radius:12px;
+    padding:14px;
+    font-family:'Cormorant Garamond', serif;
+    font-size:17px;
+    font-weight:700;
+    letter-spacing:.03em;
+    cursor:pointer;
+    margin-bottom:26px;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .fuel-trigger:hover{border-color:#ff8a4c;background:rgba(255,138,76,.06);}
+
+  .modal-overlay{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(2,4,10,.78);
+    z-index:50;
+    align-items:flex-start;
+    justify-content:center;
+    padding:40px 16px;
+    overflow-y:auto;
+  }
+  .modal-overlay.open{display:flex;}
+
+  .fuel-card{
+    width:100%;
+    max-width:560px;
+    background:linear-gradient(160deg,#0d1830,#0a1426);
+    border:1px solid #5a2e16;
+    border-radius:18px;
+    padding:30px 28px 32px;
+    box-shadow:0 30px 70px -25px rgba(0,0,0,.85);
+  }
+  .fuel-head{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+  .fuel-head .emoji{font-size:34px;}
+  .fuel-head h2{
+    font-size:27px;font-weight:700;margin:0;
+    color:#ff7a3d;letter-spacing:.01em;
+  }
+  .fuel-sub{color:var(--muted);font-size:17px;line-height:1.5;margin-bottom:22px;}
+
+  .fuel-field{margin-bottom:18px;}
+  .fuel-field label{
+    display:block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:#8fa0bd;margin-bottom:8px;
+  }
+  .fuel-field input,.fuel-field select{
+    width:100%;background:var(--field);border:1px solid var(--border);
+    border-radius:10px;color:var(--text);font-family:'Cormorant Garamond', serif;
+    font-size:19px;padding:13px 16px;outline:none;
+  }
+  .fuel-field select{appearance:none;-webkit-appearance:none;cursor:pointer;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'><path d='M1 1L7 7L13 1' stroke='%237e8aa3' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 16px center;
+  }
+  .fuel-field input:focus,.fuel-field select:focus{border-color:#ff7a3d;box-shadow:0 0 0 3px rgba(255,122,61,.15);}
+
+  .fuel-actions{display:flex;gap:14px;margin-top:8px;}
+  .fuel-btn{
+    flex:1;border-radius:12px;padding:16px;font-size:17px;font-weight:700;
+    font-family:'Cormorant Garamond', serif;cursor:pointer;letter-spacing:.03em;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .fuel-btn-cancel{background:transparent;border:1px solid var(--border);color:var(--text);}
+  .fuel-btn-cancel:hover{border-color:#ff7a3d;color:#ff7a3d;}
+  .fuel-btn-save{background:linear-gradient(160deg,#ff8a4c,#d9551f);border:none;color:#1a0a02;}
+  .fuel-btn-save:hover{box-shadow:0 8px 24px -8px rgba(255,122,61,.5);}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="brand">Char Dham <span>&middot;</span> Travel Ledger</div>
+
+  <button class="fuel-trigger" id="fuelTriggerBtn">⛽ Quick Petrol Pump Stop</button>
 
   <div class="card">
     <div class="card-title"><span class="plus">+</span> Add New Expense</div>
@@ -218,6 +294,51 @@
     <div class="actions">
       <button class="btn btn-ghost" id="downloadBtn">Download as Excel</button>
       <button class="btn btn-ghost" id="clearBtn">Clear All</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="fuelOverlay">
+  <div class="fuel-card">
+    <div class="fuel-head">
+      <span class="emoji">⛽</span>
+      <h2>Petrol Pump Stop</h2>
+    </div>
+    <div class="fuel-sub">You've stopped at a petrol pump. Input the fuel details to log the refueling cost in your Expense Tracker.</div>
+
+    <div class="fuel-field">
+      <label>Total Cost / Amount Paid (₹)</label>
+      <input id="fuelTotal" type="number" min="0" step="0.01" placeholder="e.g. 2000">
+    </div>
+
+    <div class="fuel-field">
+      <label>Paid By</label>
+      <select id="fuelPaidBy">
+        <option>Pandu</option>
+        <option>Arun</option>
+        <option>DVN</option>
+        <option>Niranjan</option>
+      </select>
+    </div>
+
+    <div class="fuel-field">
+      <label>Fuel Price per Liter (₹)</label>
+      <input id="fuelPrice" type="number" min="0" step="0.01" placeholder="102.50">
+    </div>
+
+    <div class="fuel-field">
+      <label>Liters of Fuel Filled</label>
+      <input id="fuelLiters" type="number" min="0" step="0.01" placeholder="0.00">
+    </div>
+
+    <div class="fuel-field">
+      <label>Location / Pump Name</label>
+      <input id="fuelLocation" type="text" placeholder="e.g. HP Fuel Station, near Srivilliputhur highway">
+    </div>
+
+    <div class="fuel-actions">
+      <button class="fuel-btn fuel-btn-cancel" id="fuelCancelBtn">Skip / Cancel</button>
+      <button class="fuel-btn fuel-btn-save" id="fuelSaveBtn">⛽ Save Fuel Cost</button>
     </div>
   </div>
 </div>
@@ -326,7 +447,57 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 });
 
 render();
+
+// Petrol Pump Stop modal
+const fuelOverlay = document.getElementById('fuelOverlay');
+
+document.getElementById('fuelTriggerBtn').addEventListener('click', () => {
+  fuelOverlay.classList.add('open');
+});
+
+document.getElementById('fuelCancelBtn').addEventListener('click', () => {
+  fuelOverlay.classList.remove('open');
+});
+
+fuelOverlay.addEventListener('click', (ev) => {
+  if(ev.target === fuelOverlay) fuelOverlay.classList.remove('open');
+});
+
+document.getElementById('fuelSaveBtn').addEventListener('click', () => {
+  const total = parseFloat(document.getElementById('fuelTotal').value);
+  const paidBy = document.getElementById('fuelPaidBy').value;
+  const price = parseFloat(document.getElementById('fuelPrice').value);
+  const liters = parseFloat(document.getElementById('fuelLiters').value);
+  const location = document.getElementById('fuelLocation').value.trim();
+
+  if(!total || total <= 0){
+    alert('Please enter a valid total cost.');
+    return;
+  }
+
+  let description = 'Fuel refill';
+  if(liters > 0) description += ` (${liters}L`;
+  if(liters > 0 && price > 0) description += ` @ ₹${price}/L`;
+  if(liters > 0) description += ')';
+
+  expenses.push({
+    date: new Date().toLocaleDateString('en-IN'),
+    category: 'Fuel',
+    paidBy,
+    description,
+    amount: total,
+    location
+  });
+
+  document.getElementById('fuelTotal').value = '';
+  document.getElementById('fuelPrice').value = '';
+  document.getElementById('fuelLiters').value = '';
+  document.getElementById('fuelLocation').value = '';
+
+  render();
+  save();
+  fuelOverlay.classList.remove('open');
+});
 </script>
 </body>
 </html>
-```
