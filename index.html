@@ -145,6 +145,12 @@
     border:none;background:none;font-family:inherit;
   }
   .del:hover{color:#d9544a;}
+  .edit{
+    cursor:pointer;color:var(--muted);font-size:13px;
+    border:none;background:none;font-family:inherit;
+    margin-right:8px;
+  }
+  .edit:hover{color:var(--gold-2);}
   .empty{
     text-align:center;color:var(--muted);
     font-style:italic;padding:30px 0;
@@ -284,7 +290,7 @@
     <table id="ledgerTable">
       <thead>
         <tr>
-          <th>Date</th><th>Category</th><th>Paid By</th><th>Description</th><th>Location</th><th style="text-align:right">Amount</th><th></th>
+          <th>Date</th><th>Category</th><th>Paid By</th><th>Description</th><th>Location</th><th style="text-align:right">Amount</th><th></th><th></th>
         </tr>
       </thead>
       <tbody id="ledgerBody"></tbody>
@@ -343,6 +349,57 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="editOverlay">
+  <div class="fuel-card" style="border-color:var(--border);">
+    <div class="fuel-head">
+      <span class="emoji">✎</span>
+      <h2 style="color:var(--gold);">Edit Expense</h2>
+    </div>
+
+    <div class="fuel-field">
+      <label>Category</label>
+      <select id="editCategory">
+        <option>Fuel</option>
+        <option>Accommodation</option>
+        <option>Food</option>
+        <option>Darshan</option>
+        <option>Shopping</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="fuel-field">
+      <label>Paid By</label>
+      <select id="editPaidBy">
+        <option>Pandu</option>
+        <option>Arun</option>
+        <option>DVN</option>
+        <option>Niranjan</option>
+      </select>
+    </div>
+
+    <div class="fuel-field">
+      <label>Description</label>
+      <input id="editDescription" type="text" placeholder="e.g. Toll Tax">
+    </div>
+
+    <div class="fuel-field">
+      <label>Amount (₹)</label>
+      <input id="editAmount" type="number" min="0" step="0.01" placeholder="0">
+    </div>
+
+    <div class="fuel-field">
+      <label>Temple / Location</label>
+      <input id="editLocation" type="text" placeholder="e.g. Madurai">
+    </div>
+
+    <div class="fuel-actions">
+      <button class="fuel-btn fuel-btn-cancel" id="editCancelBtn">Cancel</button>
+      <button class="fuel-btn" id="editSaveBtn" style="background:linear-gradient(160deg,#e3b53a,#b8862a);color:#1a1305;">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <script>
 let expenses = JSON.parse(localStorage.getItem('travelExpenses') || '[]');
 
@@ -371,6 +428,7 @@ function render(){
         <td>${e.description || '—'}</td>
         <td>${e.location || '—'}</td>
         <td class="amt">${fmt(e.amount)}</td>
+        <td><button class="edit" data-i="${i}">Edit</button></td>
         <td><button class="del" data-i="${i}">✕</button></td>
       `;
       body.appendChild(tr);
@@ -411,6 +469,9 @@ document.getElementById('ledgerBody').addEventListener('click', (ev) => {
     expenses.splice(i, 1);
     render();
     save();
+  }
+  if(ev.target.classList.contains('edit')){
+    openEditModal(parseInt(ev.target.dataset.i, 10));
   }
 });
 
@@ -497,6 +558,50 @@ document.getElementById('fuelSaveBtn').addEventListener('click', () => {
   render();
   save();
   fuelOverlay.classList.remove('open');
+});
+
+// Edit Expense modal
+const editOverlay = document.getElementById('editOverlay');
+let editingIndex = null;
+
+function openEditModal(i){
+  editingIndex = i;
+  const e = expenses[i];
+  document.getElementById('editCategory').value = e.category;
+  document.getElementById('editPaidBy').value = e.paidBy;
+  document.getElementById('editDescription').value = e.description || '';
+  document.getElementById('editAmount').value = e.amount;
+  document.getElementById('editLocation').value = e.location || '';
+  editOverlay.classList.add('open');
+}
+
+document.getElementById('editCancelBtn').addEventListener('click', () => {
+  editOverlay.classList.remove('open');
+});
+
+editOverlay.addEventListener('click', (ev) => {
+  if(ev.target === editOverlay) editOverlay.classList.remove('open');
+});
+
+document.getElementById('editSaveBtn').addEventListener('click', () => {
+  if(editingIndex === null) return;
+  const amount = parseFloat(document.getElementById('editAmount').value);
+  if(!amount || amount <= 0){
+    alert('Please enter a valid amount.');
+    return;
+  }
+  expenses[editingIndex] = {
+    ...expenses[editingIndex],
+    category: document.getElementById('editCategory').value,
+    paidBy: document.getElementById('editPaidBy').value,
+    description: document.getElementById('editDescription').value.trim(),
+    amount,
+    location: document.getElementById('editLocation').value.trim()
+  };
+  render();
+  save();
+  editOverlay.classList.remove('open');
+  editingIndex = null;
 });
 </script>
 </body>
