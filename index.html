@@ -601,4 +601,340 @@ window.addEventListener('load', () => {
 </script>
 
 </body>
+</html>Here's the full code. Save it as an `.html` file and open it in any browser.
+
+You already have the file itself shared above, which you can download directly — but here's the full code, as requested:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Yatra Expense Ledger</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Cormorant:ital@0;1&display=swap');
+
+  :root{
+    --bg:#070b14;
+    --panel:#0d1830;
+    --panel-2:#0a1426;
+    --field:#0a1322;
+    --border:#1e2c47;
+    --gold:#d9a62a;
+    --gold-2:#caa544;
+    --text:#eef1f6;
+    --muted:#7e8aa3;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(190,140,40,0.07), transparent 40%),
+      radial-gradient(circle at 85% 100%, rgba(120,90,200,0.05), transparent 45%),
+      var(--bg);
+    font-family:'Cormorant', serif;
+    color:var(--text);
+    padding:40px 16px 80px;
+  }
+  h1,h2,.brand,label,button{font-family:'Cormorant Garamond', serif;}
+  .wrap{max-width:680px;margin:0 auto;}
+
+  .brand{
+    text-align:center;
+    letter-spacing:.18em;
+    color:var(--muted);
+    font-size:13px;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .brand span{color:var(--gold);}
+
+  .card{
+    background:linear-gradient(160deg,var(--panel),var(--panel-2));
+    border:1px solid var(--border);
+    border-radius:18px;
+    padding:30px 28px 32px;
+    box-shadow:0 30px 60px -30px rgba(0,0,0,.7);
+    margin-bottom:26px;
+  }
+  .card-title{
+    display:flex;align-items:center;gap:10px;
+    font-size:26px;font-weight:700;letter-spacing:.01em;
+    margin-bottom:22px;
+  }
+  .card-title .plus{color:var(--muted);font-size:22px;font-weight:400;}
+
+  label.field-label{
+    display:block;
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+  .field{margin-bottom:18px;}
+
+  select,input{
+    width:100%;
+    background:var(--field);
+    border:1px solid var(--border);
+    border-radius:10px;
+    color:var(--text);
+    font-family:'Cormorant Garamond', serif;
+    font-size:19px;
+    padding:13px 16px;
+    outline:none;
+    appearance:none;
+    -webkit-appearance:none;
+  }
+  select{
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'><path d='M1 1L7 7L13 1' stroke='%237e8aa3' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat;
+    background-position:right 16px center;
+    cursor:pointer;
+  }
+  input::placeholder{color:#4d5773;font-style:italic;}
+  select:focus,input:focus{border-color:var(--gold-2);box-shadow:0 0 0 3px rgba(217,166,42,.12);}
+
+  .btn{
+    width:100%;
+    border:none;
+    border-radius:12px;
+    padding:16px;
+    font-size:18px;
+    font-weight:700;
+    letter-spacing:.04em;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:active{transform:translateY(1px);}
+  .btn-gold{
+    background:linear-gradient(160deg,#e3b53a,#b8862a);
+    color:#1a1305;
+  }
+  .btn-gold:hover{box-shadow:0 8px 24px -8px rgba(217,166,42,.5);}
+  .btn-ghost{
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text);
+  }
+  .btn-ghost:hover{border-color:var(--gold-2);color:var(--gold-2);}
+
+  .ledger-head{
+    display:flex;justify-content:space-between;align-items:baseline;
+    margin-bottom:16px;
+  }
+  .ledger-head h2{font-size:22px;margin:0;font-weight:700;}
+  .ledger-head .total{font-size:14px;color:var(--muted);letter-spacing:.05em;}
+  .ledger-head .total b{color:var(--gold);font-size:17px;}
+
+  table{width:100%;border-collapse:collapse;font-size:16px;}
+  th{
+    text-align:left;
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--muted);
+    padding:0 10px 10px;
+    border-bottom:1px solid var(--border);
+  }
+  td{
+    padding:12px 10px;
+    border-bottom:1px solid rgba(30,44,71,.5);
+    vertical-align:top;
+  }
+  tr:last-child td{border-bottom:none;}
+  .amt{color:var(--gold);font-weight:600;text-align:right;white-space:nowrap;}
+  .del{
+    cursor:pointer;color:var(--muted);font-size:13px;
+    border:none;background:none;font-family:inherit;
+  }
+  .del:hover{color:#d9544a;}
+  .empty{
+    text-align:center;color:var(--muted);
+    font-style:italic;padding:30px 0;
+  }
+  .actions{display:flex;gap:12px;margin-top:18px;}
+  .actions .btn{flex:1;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">Char Dham <span>&middot;</span> Travel Ledger</div>
+
+  <div class="card">
+    <div class="card-title"><span class="plus">+</span> Add New Expense</div>
+
+    <div class="field">
+      <label class="field-label">Category</label>
+      <select id="category">
+        <option>Fuel</option>
+        <option>Accommodation</option>
+        <option>Food</option>
+        <option>Darshan</option>
+        <option>Shopping</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Paid By</label>
+      <select id="paidBy">
+        <option>Pandu</option>
+        <option>Arun</option>
+        <option>DVN</option>
+        <option>Niranjan</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Description</label>
+      <input id="description" type="text" placeholder="e.g. Toll Tax">
+    </div>
+
+    <div class="field">
+      <label class="field-label">Amount (₹)</label>
+      <input id="amount" type="number" min="0" step="0.01" placeholder="0">
+    </div>
+
+    <div class="field">
+      <label class="field-label">Temple / Location</label>
+      <input id="location" type="text" placeholder="e.g. Madurai">
+    </div>
+
+    <button class="btn btn-gold" id="addBtn"><span class="plus">+</span> Add Expense</button>
+  </div>
+
+  <div class="card">
+    <div class="ledger-head">
+      <h2>Ledger</h2>
+      <div class="total">Total: <b id="totalAmt">₹0</b></div>
+    </div>
+    <table id="ledgerTable">
+      <thead>
+        <tr>
+          <th>Date</th><th>Category</th><th>Paid By</th><th>Description</th><th>Location</th><th style="text-align:right">Amount</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="ledgerBody"></tbody>
+    </table>
+    <div id="emptyMsg" class="empty">No expenses added yet.</div>
+
+    <div class="actions">
+      <button class="btn btn-ghost" id="downloadBtn">Download as Excel</button>
+      <button class="btn btn-ghost" id="clearBtn">Clear All</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let expenses = JSON.parse(localStorage.getItem('travelExpenses') || '[]');
+
+function save(){
+  localStorage.setItem('travelExpenses', JSON.stringify(expenses));
+}
+
+function fmt(n){
+  return '₹' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:2});
+}
+
+function render(){
+  const body = document.getElementById('ledgerBody');
+  const empty = document.getElementById('emptyMsg');
+  body.innerHTML = '';
+  if(expenses.length === 0){
+    empty.style.display = 'block';
+  } else {
+    empty.style.display = 'none';
+    expenses.forEach((e, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${e.date}</td>
+        <td>${e.category}</td>
+        <td>${e.paidBy}</td>
+        <td>${e.description || '—'}</td>
+        <td>${e.location || '—'}</td>
+        <td class="amt">${fmt(e.amount)}</td>
+        <td><button class="del" data-i="${i}">✕</button></td>
+      `;
+      body.appendChild(tr);
+    });
+  }
+  const total = expenses.reduce((s,e) => s + Number(e.amount), 0);
+  document.getElementById('totalAmt').textContent = fmt(total);
+}
+
+document.getElementById('addBtn').addEventListener('click', () => {
+  const category = document.getElementById('category').value;
+  const paidBy = document.getElementById('paidBy').value;
+  const description = document.getElementById('description').value.trim();
+  const amount = parseFloat(document.getElementById('amount').value);
+  const location = document.getElementById('location').value.trim();
+
+  if(!amount || amount <= 0){
+    alert('Please enter a valid amount.');
+    return;
+  }
+
+  expenses.push({
+    date: new Date().toLocaleDateString('en-IN'),
+    category, paidBy, description, amount, location
+  });
+
+  document.getElementById('description').value = '';
+  document.getElementById('amount').value = '';
+  document.getElementById('location').value = '';
+
+  render();
+  save();
+});
+
+document.getElementById('ledgerBody').addEventListener('click', (ev) => {
+  if(ev.target.classList.contains('del')){
+    const i = parseInt(ev.target.dataset.i, 10);
+    expenses.splice(i, 1);
+    render();
+    save();
+  }
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if(expenses.length === 0) return;
+  if(confirm('Clear all expenses?')){
+    expenses = [];
+    render();
+    save();
+  }
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if(expenses.length === 0){
+    alert('No expenses to download yet.');
+    return;
+  }
+  const rows = expenses.map(e => ({
+    Date: e.date,
+    Category: e.category,
+    'Paid By': e.paidBy,
+    Description: e.description,
+    'Temple/Location': e.location,
+    'Amount (₹)': Number(e.amount)
+  }));
+  const total = expenses.reduce((s,e) => s + Number(e.amount), 0);
+  rows.push({Date:'', Category:'', 'Paid By':'', Description:'', 'Temple/Location':'TOTAL', 'Amount (₹)': total});
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:12},{wch:12},{wch:14},{wch:24},{wch:18},{wch:12}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Expenses');
+  XLSX.writeFile(wb, 'travel-expenses.xlsx');
+});
+
+render();
+</script>
+</body>
 </html>
+```
