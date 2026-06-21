@@ -243,6 +243,11 @@
     <div class="card-title"><span class="plus">+</span> Add New Expense</div>
 
     <div class="field">
+      <label class="field-label">Date</label>
+      <input id="date" type="date">
+    </div>
+
+    <div class="field">
       <label class="field-label">Category</label>
       <select id="category">
         <option>Fuel</option>
@@ -313,6 +318,11 @@
     <div class="fuel-sub">You've stopped at a petrol pump. Input the fuel details to log the refueling cost in your Expense Tracker.</div>
 
     <div class="fuel-field">
+      <label>Date</label>
+      <input id="fuelDate" type="date">
+    </div>
+
+    <div class="fuel-field">
       <label>Total Cost / Amount Paid (₹)</label>
       <input id="fuelTotal" type="number" min="0" step="0.01" placeholder="e.g. 2000">
     </div>
@@ -354,6 +364,11 @@
     <div class="fuel-head">
       <span class="emoji">✎</span>
       <h2 style="color:var(--gold);">Edit Expense</h2>
+    </div>
+
+    <div class="fuel-field">
+      <label>Date</label>
+      <input id="editDate" type="date">
     </div>
 
     <div class="fuel-field">
@@ -407,6 +422,15 @@ function save(){
   localStorage.setItem('travelExpenses', JSON.stringify(expenses));
 }
 
+function todayISO(){
+  return new Date().toISOString().split('T')[0];
+}
+
+function formatDisplayDate(iso){
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
 function fmt(n){
   return '₹' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:2});
 }
@@ -439,6 +463,7 @@ function render(){
 }
 
 document.getElementById('addBtn').addEventListener('click', () => {
+  const date = document.getElementById('date').value;
   const category = document.getElementById('category').value;
   const paidBy = document.getElementById('paidBy').value;
   const description = document.getElementById('description').value.trim();
@@ -449,15 +474,20 @@ document.getElementById('addBtn').addEventListener('click', () => {
     alert('Please enter a valid amount.');
     return;
   }
+  if(!date){
+    alert('Please select a date.');
+    return;
+  }
 
   expenses.push({
-    date: new Date().toLocaleDateString('en-IN'),
+    date: formatDisplayDate(date),
     category, paidBy, description, amount, location
   });
 
   document.getElementById('description').value = '';
   document.getElementById('amount').value = '';
   document.getElementById('location').value = '';
+  document.getElementById('date').value = todayISO();
 
   render();
   save();
@@ -508,11 +538,13 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
 });
 
 render();
+document.getElementById('date').value = todayISO();
 
 // Petrol Pump Stop modal
 const fuelOverlay = document.getElementById('fuelOverlay');
 
 document.getElementById('fuelTriggerBtn').addEventListener('click', () => {
+  document.getElementById('fuelDate').value = todayISO();
   fuelOverlay.classList.add('open');
 });
 
@@ -525,6 +557,7 @@ fuelOverlay.addEventListener('click', (ev) => {
 });
 
 document.getElementById('fuelSaveBtn').addEventListener('click', () => {
+  const date = document.getElementById('fuelDate').value;
   const total = parseFloat(document.getElementById('fuelTotal').value);
   const paidBy = document.getElementById('fuelPaidBy').value;
   const price = parseFloat(document.getElementById('fuelPrice').value);
@@ -535,6 +568,10 @@ document.getElementById('fuelSaveBtn').addEventListener('click', () => {
     alert('Please enter a valid total cost.');
     return;
   }
+  if(!date){
+    alert('Please select a date.');
+    return;
+  }
 
   let description = 'Fuel refill';
   if(liters > 0) description += ` (${liters}L`;
@@ -542,7 +579,7 @@ document.getElementById('fuelSaveBtn').addEventListener('click', () => {
   if(liters > 0) description += ')';
 
   expenses.push({
-    date: new Date().toLocaleDateString('en-IN'),
+    date: formatDisplayDate(date),
     category: 'Fuel',
     paidBy,
     description,
@@ -564,9 +601,15 @@ document.getElementById('fuelSaveBtn').addEventListener('click', () => {
 const editOverlay = document.getElementById('editOverlay');
 let editingIndex = null;
 
+function toISO(displayDate){
+  const [d,m,y] = displayDate.split('/');
+  return `${y}-${m}-${d}`;
+}
+
 function openEditModal(i){
   editingIndex = i;
   const e = expenses[i];
+  document.getElementById('editDate').value = toISO(e.date);
   document.getElementById('editCategory').value = e.category;
   document.getElementById('editPaidBy').value = e.paidBy;
   document.getElementById('editDescription').value = e.description || '';
@@ -586,12 +629,18 @@ editOverlay.addEventListener('click', (ev) => {
 document.getElementById('editSaveBtn').addEventListener('click', () => {
   if(editingIndex === null) return;
   const amount = parseFloat(document.getElementById('editAmount').value);
+  const date = document.getElementById('editDate').value;
   if(!amount || amount <= 0){
     alert('Please enter a valid amount.');
     return;
   }
+  if(!date){
+    alert('Please select a date.');
+    return;
+  }
   expenses[editingIndex] = {
     ...expenses[editingIndex],
+    date: formatDisplayDate(date),
     category: document.getElementById('editCategory').value,
     paidBy: document.getElementById('editPaidBy').value,
     description: document.getElementById('editDescription').value.trim(),
