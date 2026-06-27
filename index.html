@@ -519,21 +519,40 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
     alert('No expenses to download yet.');
     return;
   }
-  const rows = expenses.map(e => ({
+
+  const toRow = (e) => ({
     Date: e.date,
     Category: e.category,
     'Paid By': e.paidBy,
     Description: e.description,
     'Temple/Location': e.location,
     'Amount (₹)': Number(e.amount)
-  }));
-  const total = expenses.reduce((s,e) => s + Number(e.amount), 0);
-  rows.push({Date:'', Category:'', 'Paid By':'', Description:'', 'Temple/Location':'TOTAL', 'Amount (₹)': total});
+  });
 
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [{wch:12},{wch:12},{wch:14},{wch:24},{wch:18},{wch:12}];
+  const colWidths = [{wch:12},{wch:14},{wch:14},{wch:26},{wch:20},{wch:14}];
+
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Expenses');
+
+  // Sheet 1: full ledger, all travelers
+  const allRows = expenses.map(toRow);
+  const allTotal = expenses.reduce((s,e) => s + Number(e.amount), 0);
+  allRows.push({Date:'', Category:'', 'Paid By':'', Description:'', 'Temple/Location':'TOTAL', 'Amount (₹)': allTotal});
+  const wsAll = XLSX.utils.json_to_sheet(allRows);
+  wsAll['!cols'] = colWidths;
+  XLSX.utils.book_append_sheet(wb, wsAll, 'All Expenses');
+
+  // One sheet per fixed traveler name, in this order
+  const names = ['Pandu', 'Arun', 'DVN', 'Niranjan'];
+  names.forEach(name => {
+    const personExpenses = expenses.filter(e => e.paidBy === name);
+    const rows = personExpenses.map(toRow);
+    const total = personExpenses.reduce((s,e) => s + Number(e.amount), 0);
+    rows.push({Date:'', Category:'', 'Paid By':'', Description:'', 'Temple/Location':'TOTAL', 'Amount (₹)': total});
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = colWidths;
+    XLSX.utils.book_append_sheet(wb, ws, name);
+  });
+
   XLSX.writeFile(wb, 'travel-expenses.xlsx');
 });
 
