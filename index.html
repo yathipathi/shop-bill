@@ -431,6 +431,16 @@ function formatDisplayDate(iso){
   return `${d}/${m}/${y}`;
 }
 
+function parseDisplayDate(str){
+  // Handles d/m/yyyy or dd/mm/yyyy
+  const [d,m,y] = str.split('/').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function sortExpenses(){
+  expenses.sort((a,b) => parseDisplayDate(a.date) - parseDisplayDate(b.date));
+}
+
 function fmt(n){
   return '₹' + Number(n).toLocaleString('en-IN', {maximumFractionDigits:2});
 }
@@ -489,6 +499,7 @@ document.getElementById('addBtn').addEventListener('click', () => {
   document.getElementById('location').value = '';
   document.getElementById('date').value = todayISO();
 
+  sortExpenses();
   render();
   save();
 });
@@ -519,6 +530,8 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
     alert('No expenses to download yet.');
     return;
   }
+  sortExpenses();
+  save();
 
   const toRow = (e) => ({
     Date: e.date,
@@ -556,6 +569,7 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   XLSX.writeFile(wb, 'travel-expenses.xlsx');
 });
 
+sortExpenses();
 render();
 document.getElementById('date').value = todayISO();
 
@@ -611,6 +625,7 @@ document.getElementById('fuelSaveBtn').addEventListener('click', () => {
   document.getElementById('fuelLiters').value = '';
   document.getElementById('fuelLocation').value = '';
 
+  sortExpenses();
   render();
   save();
   fuelOverlay.classList.remove('open');
@@ -666,6 +681,7 @@ document.getElementById('editSaveBtn').addEventListener('click', () => {
     amount,
     location: document.getElementById('editLocation').value.trim()
   };
+  sortExpenses();
   render();
   save();
   editOverlay.classList.remove('open');
